@@ -14,7 +14,7 @@ import asyncio
 import sys
 from pathlib import Path
 
-from court.cli import CliError, cost_text, read_article, say, setup
+from court.cli import CliError, cost_text, read_titled_article, say, setup
 from court.juror import JurorResult
 from court.personas import load_personas
 from court.session import SessionResult, run_session, save_session
@@ -53,13 +53,17 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--genre", required=True, help="文類：散文、新詩、小品文、極短篇")
     parser.add_argument("--file", required=True, type=Path, help="文章的 .txt 檔（UTF-8）")
     parser.add_argument("--title", default=None, help="標題（選填）")
+    parser.add_argument("--first-line-is-title", action="store_true",
+                        help="把檔案的第一行當作標題，不算進內文與字數")
     parser.add_argument("--provider", choices=["anthropic", "mock"], default=None)
     parser.add_argument("--out-dir", type=Path, default=RESULTS_DIR, help="結果存放的資料夾")
     args = parser.parse_args(argv)
 
     try:
         settings, provider, provider_name = setup(args.provider)
-        content = read_article(args.file, args.genre, settings)
+        file_title, content = read_titled_article(
+            args.file, args.genre, settings, first_line_is_title=args.first_line_is_title
+        )
     except CliError as exc:
         say(str(exc))
         return 1
@@ -75,7 +79,7 @@ def main(argv: list[str] | None = None) -> int:
 
     session = asyncio.run(
         run_session(
-            submission_id=args.id, genre=args.genre, title=args.title, content=content,
+            submission_id=args.id, genre=args.genre, title=args.title or file_title, content=content,
             personas=personas, settings=settings, provider=provider, on_juror_done=progress,
         )
     )

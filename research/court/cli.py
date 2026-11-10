@@ -36,17 +36,36 @@ def setup(provider_override: str | None) -> tuple[Settings, LLMProvider, str]:
     return settings, provider, provider_name
 
 
+def split_title_line(text: str) -> tuple[str | None, str]:
+    """把第一個非空白行當作標題，其餘當作內文（不更動原檔）。"""
+    lines = text.splitlines()
+    for index, line in enumerate(lines):
+        if line.strip():
+            return line.strip(), "\n".join(lines[index + 1:]).strip("\n")
+    return None, text
+
+
 def read_article(path: Path, genre: str, settings: Settings) -> str:
+    return read_titled_article(path, genre, settings, first_line_is_title=False)[1]
+
+
+def read_titled_article(
+    path: Path, genre: str, settings: Settings, *, first_line_is_title: bool
+) -> tuple[str | None, str]:
+    """讀文章檔並檢查字數。first_line_is_title 為真時，第一行是標題、不計入字數。"""
     try:
         content = path.read_text(encoding="utf-8")
     except FileNotFoundError:
         raise CliError(f"找不到檔案 {path}，請確認路徑。") from None
     except UnicodeDecodeError:
         raise CliError(f"{path} 不是 UTF-8 編碼的文字檔，請另存成 UTF-8 後再試。") from None
+    title = None
+    if first_line_is_title:
+        title, content = split_title_line(content)
     problems = check_submission(genre, content, settings)
     if problems:
-        raise CliError("\n".join(problems))
-    return content
+        raise CliError(f"{path.name}：" + "\n".join(problems))
+    return title, content
 
 
 def cost_text(settings: Settings, provider_name: str, usage: dict[str, dict[str, int]]) -> str:

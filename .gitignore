@@ -8,3 +8,6 @@ __pycache__/
 
 # 研究腳本的執行結果（內含文章全文，不進版控）
 research/results/
+
+# W0 測試文（含他人的得獎作品，不進版控）
+research/essays/
