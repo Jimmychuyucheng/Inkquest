@@ -1,0 +1,20 @@
+@import "tailwindcss";
+
+/* 視覺方向（PRD 第 7 節）：米白底、沉穩深色字。完整的主題在 W3 處理。 */
+:root {
+  --background: #faf7f0;
+  --foreground: #1c1917;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+  --font-serif: "Noto Serif TC", "Songti TC", "PMingLiU", serif;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}

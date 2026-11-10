@@ -1,0 +1,1346 @@
+{
+  "_note": "由 research/export_parity_fixtures.py 產生，請勿手動修改。",
+  "text": [
+    {
+      "text": "春 天\n\n來了\t　。",
+      "chars": 5,
+      "lines": 2
+    },
+    {
+      "text": "第一行\n\n  \n第二行\n",
+      "chars": 6,
+      "lines": 2
+    },
+    {
+      "text": "　全形空白　開頭與結尾　",
+      "chars": 9,
+      "lines": 1
+    },
+    {
+      "text": "Hello, 世界！ 123",
+      "chars": 12,
+      "lines": 1
+    },
+    {
+      "text": "雨停了\n\n　　窗台上\n一隻麻雀\r\n最後一行",
+      "chars": 14,
+      "lines": 4
+    },
+    {
+      "text": "",
+      "chars": 0,
+      "lines": 0
+    }
+  ],
+  "juries": {
+    "essay-1": [
+      "J01",
+      "J04",
+      "J05",
+      "J07",
+      "J09",
+      "J10",
+      "J13",
+      "J14",
+      "J18",
+      "J20"
+    ],
+    "abc": [
+      "J02",
+      "J03",
+      "J05",
+      "J07",
+      "J09",
+      "J11",
+      "J13",
+      "J17",
+      "J19",
+      "J20"
+    ],
+    "3f2b8c1e-9d4a-4f6b-8a2e-5c7d1e9f0a3b": [
+      "J02",
+      "J03",
+      "J06",
+      "J08",
+      "J10",
+      "J12",
+      "J13",
+      "J16",
+      "J18",
+      "J19"
+    ],
+    "投稿甲": [
+      "J01",
+      "J02",
+      "J05",
+      "J07",
+      "J11",
+      "J12",
+      "J13",
+      "J15",
+      "J18",
+      "J19"
+    ],
+    "00000000-0000-0000-0000-000000000000": [
+      "J02",
+      "J04",
+      "J05",
+      "J08",
+      "J10",
+      "J11",
+      "J15",
+      "J18",
+      "J19",
+      "J20"
+    ]
+  },
+  "juries_with_disabled": {
+    "disabled": [
+      "J01",
+      "J02",
+      "J03",
+      "J04",
+      "J05",
+      "J13"
+    ],
+    "juries": {
+      "essay-1": [
+        "J06",
+        "J07",
+        "J09",
+        "J10",
+        "J14",
+        "J15",
+        "J17",
+        "J18",
+        "J19",
+        "J20"
+      ],
+      "abc": [
+        "J06",
+        "J07",
+        "J09",
+        "J10",
+        "J11",
+        "J16",
+        "J17",
+        "J18",
+        "J19",
+        "J20"
+      ],
+      "3f2b8c1e-9d4a-4f6b-8a2e-5c7d1e9f0a3b": [
+        "J06",
+        "J08",
+        "J10",
+        "J12",
+        "J14",
+        "J15",
+        "J16",
+        "J17",
+        "J18",
+        "J19"
+      ],
+      "投稿甲": [
+        "J06",
+        "J07",
+        "J11",
+        "J12",
+        "J14",
+        "J15",
+        "J16",
+        "J18",
+        "J19",
+        "J20"
+      ],
+      "00000000-0000-0000-0000-000000000000": [
+        "J06",
+        "J07",
+        "J08",
+        "J09",
+        "J10",
+        "J11",
+        "J15",
+        "J18",
+        "J19",
+        "J20"
+      ]
+    }
+  },
+  "stats": [
+    {
+      "jurors": [
+        {
+          "code": "J01",
+          "score": 6,
+          "would_support_award": false,
+          "tags": [
+            "原創性",
+            "開頭",
+            "題材"
+          ]
+        },
+        {
+          "code": "J04",
+          "score": 7,
+          "would_support_award": true,
+          "tags": [
+            "人物",
+            "題材"
+          ]
+        },
+        {
+          "code": "J05",
+          "score": 8,
+          "would_support_award": false,
+          "tags": [
+            "原創性",
+            "真實感"
+          ]
+        },
+        {
+          "code": "J07",
+          "score": 9,
+          "would_support_award": false,
+          "tags": [
+            "人物",
+            "節奏",
+            "真實感"
+          ]
+        },
+        {
+          "code": "J09",
+          "score": 9,
+          "would_support_award": false,
+          "tags": [
+            "節奏"
+          ]
+        },
+        {
+          "code": "J10",
+          "score": 5,
+          "would_support_award": true,
+          "tags": [
+            "結構"
+          ]
+        },
+        {
+          "code": "J13",
+          "score": 6,
+          "would_support_award": false,
+          "tags": [
+            "結構"
+          ]
+        },
+        {
+          "code": "J14",
+          "score": 4,
+          "would_support_award": false,
+          "tags": [
+            "可讀性",
+            "人物"
+          ]
+        },
+        {
+          "code": "J18",
+          "score": 9,
+          "would_support_award": false,
+          "tags": [
+            "結構"
+          ]
+        },
+        {
+          "code": "J20",
+          "score": 5,
+          "would_support_award": false,
+          "tags": [
+            "語言",
+            "結構"
+          ]
+        }
+      ],
+      "stats": {
+        "juror_count": 10,
+        "mean_score": 6.8,
+        "support_count": 2,
+        "support_ratio": 0.2,
+        "potential_label": "陪審團多有保留",
+        "group_means": {
+          "文學專業": 7.0,
+          "一般讀者": 7.7,
+          "跨界視角": 6.0
+        },
+        "distribution": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 1,
+          "5": 2,
+          "6": 2,
+          "7": 1,
+          "8": 1,
+          "9": 3,
+          "10": 0
+        },
+        "score_std": 1.78,
+        "controversy": "中",
+        "top_tags": [
+          "結構",
+          "人物",
+          "原創性"
+        ]
+      }
+    },
+    {
+      "jurors": [
+        {
+          "code": "J02",
+          "score": 4,
+          "would_support_award": false,
+          "tags": [
+            "結構"
+          ]
+        },
+        {
+          "code": "J03",
+          "score": 6,
+          "would_support_award": true,
+          "tags": [
+            "原創性"
+          ]
+        },
+        {
+          "code": "J05",
+          "score": 9,
+          "would_support_award": true,
+          "tags": [
+            "人物"
+          ]
+        },
+        {
+          "code": "J07",
+          "score": 2,
+          "would_support_award": false,
+          "tags": [
+            "真實感",
+            "意象"
+          ]
+        },
+        {
+          "code": "J09",
+          "score": 7,
+          "would_support_award": true,
+          "tags": [
+            "人物",
+            "原創性"
+          ]
+        },
+        {
+          "code": "J11",
+          "score": 9,
+          "would_support_award": true,
+          "tags": [
+            "原創性"
+          ]
+        },
+        {
+          "code": "J13",
+          "score": 9,
+          "would_support_award": true,
+          "tags": [
+            "原創性"
+          ]
+        },
+        {
+          "code": "J17",
+          "score": 6,
+          "would_support_award": true,
+          "tags": [
+            "題材",
+            "語言"
+          ]
+        },
+        {
+          "code": "J19",
+          "score": 4,
+          "would_support_award": false,
+          "tags": [
+            "題材",
+            "意象",
+            "可讀性"
+          ]
+        }
+      ],
+      "stats": {
+        "juror_count": 9,
+        "mean_score": 6.2,
+        "support_count": 6,
+        "support_ratio": 0.67,
+        "potential_label": "多數陪審員支持",
+        "group_means": {
+          "文學專業": 6.3,
+          "一般讀者": 6.0,
+          "跨界視角": 6.3
+        },
+        "distribution": {
+          "0": 0,
+          "1": 0,
+          "2": 1,
+          "3": 0,
+          "4": 2,
+          "5": 0,
+          "6": 2,
+          "7": 1,
+          "8": 0,
+          "9": 3,
+          "10": 0
+        },
+        "score_std": 2.39,
+        "controversy": "高",
+        "top_tags": [
+          "原創性",
+          "人物",
+          "意象"
+        ]
+      }
+    },
+    {
+      "jurors": [
+        {
+          "code": "J02",
+          "score": 2,
+          "would_support_award": true,
+          "tags": [
+            "節奏"
+          ]
+        },
+        {
+          "code": "J03",
+          "score": 3,
+          "would_support_award": true,
+          "tags": [
+            "意象",
+            "人物",
+            "結尾"
+          ]
+        },
+        {
+          "code": "J06",
+          "score": 4,
+          "would_support_award": false,
+          "tags": [
+            "原創性",
+            "意象"
+          ]
+        },
+        {
+          "code": "J08",
+          "score": 9,
+          "would_support_award": false,
+          "tags": [
+            "節奏"
+          ]
+        },
+        {
+          "code": "J10",
+          "score": 5,
+          "would_support_award": true,
+          "tags": [
+            "結構",
+            "開頭"
+          ]
+        },
+        {
+          "code": "J12",
+          "score": 3,
+          "would_support_award": true,
+          "tags": [
+            "語言",
+            "可讀性",
+            "人物"
+          ]
+        },
+        {
+          "code": "J13",
+          "score": 5,
+          "would_support_award": false,
+          "tags": [
+            "結構"
+          ]
+        },
+        {
+          "code": "J16",
+          "score": 8,
+          "would_support_award": false,
+          "tags": [
+            "人物",
+            "語言",
+            "真實感"
+          ]
+        }
+      ],
+      "stats": {
+        "juror_count": 8,
+        "mean_score": 4.9,
+        "support_count": 4,
+        "support_ratio": 0.5,
+        "potential_label": "多數陪審員支持",
+        "group_means": {
+          "文學專業": 3.0,
+          "一般讀者": 5.7,
+          "跨界視角": 6.5
+        },
+        "distribution": {
+          "0": 0,
+          "1": 0,
+          "2": 1,
+          "3": 2,
+          "4": 1,
+          "5": 2,
+          "6": 0,
+          "7": 0,
+          "8": 1,
+          "9": 1,
+          "10": 0
+        },
+        "score_std": 2.32,
+        "controversy": "高",
+        "top_tags": [
+          "人物",
+          "節奏",
+          "意象"
+        ]
+      }
+    },
+    {
+      "jurors": [
+        {
+          "code": "J01",
+          "score": 3,
+          "would_support_award": false,
+          "tags": [
+            "可讀性"
+          ]
+        },
+        {
+          "code": "J02",
+          "score": 3,
+          "would_support_award": false,
+          "tags": [
+            "人物",
+            "節奏",
+            "語言"
+          ]
+        },
+        {
+          "code": "J05",
+          "score": 2,
+          "would_support_award": true,
+          "tags": [
+            "意象",
+            "人物",
+            "原創性"
+          ]
+        },
+        {
+          "code": "J07",
+          "score": 7,
+          "would_support_award": true,
+          "tags": [
+            "開頭",
+            "真實感"
+          ]
+        },
+        {
+          "code": "J11",
+          "score": 8,
+          "would_support_award": false,
+          "tags": [
+            "節奏",
+            "語言",
+            "情感"
+          ]
+        },
+        {
+          "code": "J12",
+          "score": 3,
+          "would_support_award": true,
+          "tags": [
+            "原創性",
+            "開頭",
+            "人物"
+          ]
+        },
+        {
+          "code": "J13",
+          "score": 6,
+          "would_support_award": true,
+          "tags": [
+            "結尾",
+            "節奏"
+          ]
+        },
+        {
+          "code": "J15",
+          "score": 6,
+          "would_support_award": true,
+          "tags": [
+            "結構"
+          ]
+        },
+        {
+          "code": "J18",
+          "score": 8,
+          "would_support_award": false,
+          "tags": [
+            "開頭",
+            "結構"
+          ]
+        },
+        {
+          "code": "J19",
+          "score": 8,
+          "would_support_award": false,
+          "tags": [
+            "結尾",
+            "開頭"
+          ]
+        }
+      ],
+      "stats": {
+        "juror_count": 10,
+        "mean_score": 5.4,
+        "support_count": 5,
+        "support_ratio": 0.5,
+        "potential_label": "多數陪審員支持",
+        "group_means": {
+          "文學專業": 2.7,
+          "一般讀者": 6.0,
+          "跨界視角": 7.0
+        },
+        "distribution": {
+          "0": 0,
+          "1": 0,
+          "2": 1,
+          "3": 3,
+          "4": 0,
+          "5": 0,
+          "6": 2,
+          "7": 1,
+          "8": 3,
+          "9": 0,
+          "10": 0
+        },
+        "score_std": 2.29,
+        "controversy": "高",
+        "top_tags": [
+          "開頭",
+          "人物",
+          "節奏"
+        ]
+      }
+    },
+    {
+      "jurors": [
+        {
+          "code": "J02",
+          "score": 3,
+          "would_support_award": true,
+          "tags": [
+            "原創性",
+            "語言"
+          ]
+        },
+        {
+          "code": "J04",
+          "score": 5,
+          "would_support_award": true,
+          "tags": [
+            "可讀性",
+            "意象",
+            "語言"
+          ]
+        },
+        {
+          "code": "J05",
+          "score": 8,
+          "would_support_award": true,
+          "tags": [
+            "真實感",
+            "開頭",
+            "人物"
+          ]
+        },
+        {
+          "code": "J08",
+          "score": 5,
+          "would_support_award": true,
+          "tags": [
+            "結尾"
+          ]
+        },
+        {
+          "code": "J10",
+          "score": 3,
+          "would_support_award": true,
+          "tags": [
+            "語言",
+            "可讀性"
+          ]
+        },
+        {
+          "code": "J11",
+          "score": 4,
+          "would_support_award": true,
+          "tags": [
+            "人物",
+            "結尾",
+            "真實感"
+          ]
+        },
+        {
+          "code": "J15",
+          "score": 5,
+          "would_support_award": true,
+          "tags": [
+            "語言",
+            "可讀性",
+            "原創性"
+          ]
+        },
+        {
+          "code": "J18",
+          "score": 6,
+          "would_support_award": true,
+          "tags": [
+            "原創性",
+            "情感",
+            "結構"
+          ]
+        },
+        {
+          "code": "J19",
+          "score": 2,
+          "would_support_award": true,
+          "tags": [
+            "原創性",
+            "情感"
+          ]
+        }
+      ],
+      "stats": {
+        "juror_count": 9,
+        "mean_score": 4.6,
+        "support_count": 9,
+        "support_ratio": 1.0,
+        "potential_label": "陪審團高度肯定",
+        "group_means": {
+          "文學專業": 5.3,
+          "一般讀者": 4.0,
+          "跨界視角": 4.3
+        },
+        "distribution": {
+          "0": 0,
+          "1": 0,
+          "2": 1,
+          "3": 2,
+          "4": 1,
+          "5": 3,
+          "6": 1,
+          "7": 0,
+          "8": 1,
+          "9": 0,
+          "10": 0
+        },
+        "score_std": 1.71,
+        "controversy": "中",
+        "top_tags": [
+          "原創性",
+          "語言",
+          "可讀性"
+        ]
+      }
+    },
+    {
+      "jurors": [
+        {
+          "code": "J01",
+          "score": 5,
+          "would_support_award": false,
+          "tags": [
+            "可讀性"
+          ]
+        },
+        {
+          "code": "J04",
+          "score": 4,
+          "would_support_award": false,
+          "tags": [
+            "結尾"
+          ]
+        },
+        {
+          "code": "J05",
+          "score": 2,
+          "would_support_award": true,
+          "tags": [
+            "原創性",
+            "可讀性"
+          ]
+        },
+        {
+          "code": "J07",
+          "score": 5,
+          "would_support_award": true,
+          "tags": [
+            "結尾",
+            "開頭",
+            "語言"
+          ]
+        },
+        {
+          "code": "J09",
+          "score": 7,
+          "would_support_award": true,
+          "tags": [
+            "結尾",
+            "人物",
+            "題材"
+          ]
+        },
+        {
+          "code": "J10",
+          "score": 9,
+          "would_support_award": false,
+          "tags": [
+            "真實感",
+            "原創性",
+            "語言"
+          ]
+        },
+        {
+          "code": "J13",
+          "score": 4,
+          "would_support_award": true,
+          "tags": [
+            "節奏",
+            "真實感",
+            "原創性"
+          ]
+        },
+        {
+          "code": "J14",
+          "score": 4,
+          "would_support_award": true,
+          "tags": [
+            "題材"
+          ]
+        }
+      ],
+      "stats": {
+        "juror_count": 8,
+        "mean_score": 5.0,
+        "support_count": 5,
+        "support_ratio": 0.63,
+        "potential_label": "多數陪審員支持",
+        "group_means": {
+          "文學專業": 3.7,
+          "一般讀者": 7.0,
+          "跨界視角": 4.0
+        },
+        "distribution": {
+          "0": 0,
+          "1": 0,
+          "2": 1,
+          "3": 0,
+          "4": 3,
+          "5": 2,
+          "6": 0,
+          "7": 1,
+          "8": 0,
+          "9": 1,
+          "10": 0
+        },
+        "score_std": 2.0,
+        "controversy": "高",
+        "top_tags": [
+          "結尾",
+          "原創性",
+          "可讀性"
+        ]
+      }
+    },
+    {
+      "jurors": [
+        {
+          "code": "J02",
+          "score": 2,
+          "would_support_award": true,
+          "tags": [
+            "結尾"
+          ]
+        },
+        {
+          "code": "J03",
+          "score": 8,
+          "would_support_award": true,
+          "tags": [
+            "結構",
+            "原創性",
+            "節奏"
+          ]
+        },
+        {
+          "code": "J05",
+          "score": 5,
+          "would_support_award": false,
+          "tags": [
+            "情感",
+            "題材"
+          ]
+        },
+        {
+          "code": "J07",
+          "score": 9,
+          "would_support_award": false,
+          "tags": [
+            "節奏"
+          ]
+        },
+        {
+          "code": "J09",
+          "score": 3,
+          "would_support_award": false,
+          "tags": [
+            "真實感",
+            "節奏"
+          ]
+        },
+        {
+          "code": "J11",
+          "score": 8,
+          "would_support_award": false,
+          "tags": [
+            "開頭",
+            "節奏"
+          ]
+        },
+        {
+          "code": "J13",
+          "score": 4,
+          "would_support_award": false,
+          "tags": [
+            "語言",
+            "開頭"
+          ]
+        },
+        {
+          "code": "J17",
+          "score": 6,
+          "would_support_award": false,
+          "tags": [
+            "原創性"
+          ]
+        },
+        {
+          "code": "J19",
+          "score": 8,
+          "would_support_award": false,
+          "tags": [
+            "情感",
+            "開頭"
+          ]
+        },
+        {
+          "code": "J20",
+          "score": 2,
+          "would_support_award": true,
+          "tags": [
+            "意象",
+            "真實感",
+            "可讀性"
+          ]
+        }
+      ],
+      "stats": {
+        "juror_count": 10,
+        "mean_score": 5.5,
+        "support_count": 3,
+        "support_ratio": 0.3,
+        "potential_label": "意見分歧，少數支持",
+        "group_means": {
+          "文學專業": 5.0,
+          "一般讀者": 6.7,
+          "跨界視角": 5.0
+        },
+        "distribution": {
+          "0": 0,
+          "1": 0,
+          "2": 2,
+          "3": 1,
+          "4": 1,
+          "5": 1,
+          "6": 1,
+          "7": 0,
+          "8": 3,
+          "9": 1,
+          "10": 0
+        },
+        "score_std": 2.54,
+        "controversy": "高",
+        "top_tags": [
+          "節奏",
+          "開頭",
+          "原創性"
+        ]
+      }
+    },
+    {
+      "jurors": [
+        {
+          "code": "J02",
+          "score": 3,
+          "would_support_award": false,
+          "tags": [
+            "原創性"
+          ]
+        },
+        {
+          "code": "J03",
+          "score": 4,
+          "would_support_award": true,
+          "tags": [
+            "語言"
+          ]
+        },
+        {
+          "code": "J06",
+          "score": 3,
+          "would_support_award": true,
+          "tags": [
+            "節奏"
+          ]
+        },
+        {
+          "code": "J08",
+          "score": 7,
+          "would_support_award": true,
+          "tags": [
+            "題材",
+            "結尾",
+            "意象"
+          ]
+        },
+        {
+          "code": "J10",
+          "score": 6,
+          "would_support_award": false,
+          "tags": [
+            "節奏",
+            "結構"
+          ]
+        },
+        {
+          "code": "J12",
+          "score": 2,
+          "would_support_award": false,
+          "tags": [
+            "原創性"
+          ]
+        },
+        {
+          "code": "J13",
+          "score": 9,
+          "would_support_award": true,
+          "tags": [
+            "題材",
+            "可讀性",
+            "語言"
+          ]
+        },
+        {
+          "code": "J16",
+          "score": 2,
+          "would_support_award": true,
+          "tags": [
+            "真實感",
+            "語言",
+            "題材"
+          ]
+        },
+        {
+          "code": "J18",
+          "score": 7,
+          "would_support_award": true,
+          "tags": [
+            "真實感"
+          ]
+        }
+      ],
+      "stats": {
+        "juror_count": 9,
+        "mean_score": 4.8,
+        "support_count": 6,
+        "support_ratio": 0.67,
+        "potential_label": "多數陪審員支持",
+        "group_means": {
+          "文學專業": 3.3,
+          "一般讀者": 5.0,
+          "跨界視角": 6.0
+        },
+        "distribution": {
+          "0": 0,
+          "1": 0,
+          "2": 2,
+          "3": 2,
+          "4": 1,
+          "5": 0,
+          "6": 1,
+          "7": 2,
+          "8": 0,
+          "9": 1,
+          "10": 0
+        },
+        "score_std": 2.39,
+        "controversy": "高",
+        "top_tags": [
+          "語言",
+          "題材",
+          "原創性"
+        ]
+      }
+    },
+    {
+      "jurors": [
+        {
+          "code": "J01",
+          "score": 3,
+          "would_support_award": true,
+          "tags": [
+            "開頭",
+            "原創性"
+          ]
+        },
+        {
+          "code": "J02",
+          "score": 9,
+          "would_support_award": false,
+          "tags": [
+            "真實感"
+          ]
+        },
+        {
+          "code": "J05",
+          "score": 3,
+          "would_support_award": true,
+          "tags": [
+            "結構",
+            "結尾"
+          ]
+        },
+        {
+          "code": "J07",
+          "score": 4,
+          "would_support_award": false,
+          "tags": [
+            "結構"
+          ]
+        },
+        {
+          "code": "J11",
+          "score": 3,
+          "would_support_award": true,
+          "tags": [
+            "結構",
+            "語言",
+            "開頭"
+          ]
+        },
+        {
+          "code": "J12",
+          "score": 7,
+          "would_support_award": true,
+          "tags": [
+            "情感",
+            "人物",
+            "開頭"
+          ]
+        },
+        {
+          "code": "J13",
+          "score": 3,
+          "would_support_award": true,
+          "tags": [
+            "語言",
+            "意象",
+            "題材"
+          ]
+        },
+        {
+          "code": "J15",
+          "score": 7,
+          "would_support_award": false,
+          "tags": [
+            "節奏"
+          ]
+        }
+      ],
+      "stats": {
+        "juror_count": 8,
+        "mean_score": 4.9,
+        "support_count": 5,
+        "support_ratio": 0.63,
+        "potential_label": "多數陪審員支持",
+        "group_means": {
+          "文學專業": 5.0,
+          "一般讀者": 4.7,
+          "跨界視角": 5.0
+        },
+        "distribution": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 4,
+          "4": 1,
+          "5": 0,
+          "6": 0,
+          "7": 2,
+          "8": 0,
+          "9": 1,
+          "10": 0
+        },
+        "score_std": 2.26,
+        "controversy": "高",
+        "top_tags": [
+          "開頭",
+          "結構",
+          "語言"
+        ]
+      }
+    },
+    {
+      "jurors": [
+        {
+          "code": "J02",
+          "score": 6,
+          "would_support_award": false,
+          "tags": [
+            "真實感",
+            "可讀性"
+          ]
+        },
+        {
+          "code": "J04",
+          "score": 3,
+          "would_support_award": true,
+          "tags": [
+            "情感",
+            "開頭"
+          ]
+        },
+        {
+          "code": "J05",
+          "score": 2,
+          "would_support_award": false,
+          "tags": [
+            "開頭"
+          ]
+        },
+        {
+          "code": "J08",
+          "score": 4,
+          "would_support_award": false,
+          "tags": [
+            "結尾"
+          ]
+        },
+        {
+          "code": "J10",
+          "score": 7,
+          "would_support_award": false,
+          "tags": [
+            "開頭"
+          ]
+        },
+        {
+          "code": "J11",
+          "score": 3,
+          "would_support_award": false,
+          "tags": [
+            "開頭",
+            "結構"
+          ]
+        },
+        {
+          "code": "J15",
+          "score": 8,
+          "would_support_award": true,
+          "tags": [
+            "結構",
+            "人物",
+            "節奏"
+          ]
+        },
+        {
+          "code": "J18",
+          "score": 4,
+          "would_support_award": false,
+          "tags": [
+            "意象"
+          ]
+        },
+        {
+          "code": "J19",
+          "score": 8,
+          "would_support_award": true,
+          "tags": [
+            "原創性",
+            "結構"
+          ]
+        },
+        {
+          "code": "J20",
+          "score": 9,
+          "would_support_award": true,
+          "tags": [
+            "開頭",
+            "題材",
+            "原創性"
+          ]
+        }
+      ],
+      "stats": {
+        "juror_count": 10,
+        "mean_score": 5.4,
+        "support_count": 4,
+        "support_ratio": 0.4,
+        "potential_label": "意見分歧，少數支持",
+        "group_means": {
+          "文學專業": 3.7,
+          "一般讀者": 4.7,
+          "跨界視角": 7.3
+        },
+        "distribution": {
+          "0": 0,
+          "1": 0,
+          "2": 1,
+          "3": 2,
+          "4": 2,
+          "5": 0,
+          "6": 1,
+          "7": 1,
+          "8": 2,
+          "9": 1,
+          "10": 0
+        },
+        "score_std": 2.37,
+        "controversy": "高",
+        "top_tags": [
+          "開頭",
+          "結構",
+          "原創性"
+        ]
+      }
+    }
+  ]
+}

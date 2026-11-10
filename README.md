@@ -4,7 +4,7 @@ AI 文學獎法院：從 20 位不同職業人設的 AI 陪審員中抽出 10 �
 
 - 規格：[docs/PRD.md](docs/PRD.md)、[docs/research-plan.md](docs/research-plan.md)
 - 開發紀錄：[devlog.md](devlog.md)
-- 目前進度：R1、W0 完成（法官維持 Haiku 5.5）；下一步 W1 Web App 骨架
+- 目前進度：R1、W0 完成（法官維持 Haiku 5.5）；W1 程式完成，等 Supabase 與 Google 登入設定後實測
 
 ## 資料夾
 
@@ -16,6 +16,7 @@ shared/     研究腳本與 Web App 共用的設定
   prompts/        prompt 模板
   schemas/        JSON Schema（由 research/court/schemas.py 匯出）
 research/   Python 研究腳本
+web/        Next.js Web App
 ```
 
 ## 第一次設定
@@ -92,3 +93,49 @@ cd research
 ```
 
 沒有重新匯出的話，測試會提醒你。
+
+## Web App
+
+需要 Node.js 20 以上。
+
+### 第一次設定
+
+1. **建立 Supabase 專案**（supabase.com → New project，區域選 Tokyo 或 Singapore）。
+2. **建立資料表**：Supabase 左側 SQL Editor → 貼上 [`web/supabase/migrations/0001_init.sql`](web/supabase/migrations/0001_init.sql) 的全部內容 → Run。
+3. **設定 Google 登入**：
+   1. Google Cloud Console → 建立專案 → APIs & Services → OAuth consent screen：類型選 External，填應用程式名稱與你的 email；測試階段把要登入的 Google 帳號加進 Test users（或直接按 Publish app）。
+   2. Credentials → Create Credentials → OAuth client ID → Web application。
+      - Authorized JavaScript origins：`http://localhost:3000`（上線後再加正式網址）
+      - Authorized redirect URIs：`https://<你的專案代碼>.supabase.co/auth/v1/callback`
+   3. 拿到 Client ID 與 Client Secret，貼到 Supabase → Authentication → Sign In / Providers → Google，並啟用。
+   4. Supabase → Authentication → URL Configuration：Site URL 填 `http://localhost:3000`，Redirect URLs 加上 `http://localhost:3000/auth/callback`（上線後再加正式網址）。
+4. **填環境變數**：
+   ```bash
+   cd web
+   cp .env.example .env.local
+   ```
+   在 `.env.local` 填入 Supabase → Project Settings → API 的三個值：Project URL、anon（publishable）key、service_role（secret）key。
+   service_role key 可以繞過所有權限檢查，只能放在這個檔案與部署平台的環境變數，不要貼到任何地方。
+5. **安裝與寫入初始資料**：
+   ```bash
+   npm install
+   npm run seed        # 把 20 位人設與額度初始值寫進資料庫
+   ```
+6. **把自己設為管理者**：先用 Google 登入網站一次，再到 Supabase SQL Editor 執行（換成你的 email）：
+   ```sql
+   update public.profiles set role = 'admin' where email = '你的 email';
+   ```
+
+### 日常指令（在 `web/` 內）
+
+```bash
+npm run dev         # 本機啟動 http://localhost:3000
+npm test            # 單元測試（不需要資料庫、不呼叫 AI）
+npm run test:db     # 用真實的 Supabase 測試額度與資料權限（會建立並刪除兩個測試帳號，不呼叫 AI）
+npm run typecheck   # 型別檢查
+npm run lint
+npm run build       # 正式建置
+```
+
+人設、prompt、設定都在根目錄的 `shared/`；`npm run dev`、`build`、`test` 會自動把它們同步到 `web/src/generated/`。
+改了 `shared/personas.yaml` 之後，再執行一次 `npm run seed` 更新資料庫。

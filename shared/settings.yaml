@@ -121,3 +121,21 @@ stats:
       label: 意見分歧，少數支持
     - min: 0.0
       label: 陪審團多有保留
+
+# ---- Web App 的額度與限制（PRD 第 3、10 節）。這些是初始值；上線後以資料庫 settings 表為準。----
+web:
+  # 每人每日投稿次數（A-3）
+  daily_quota_per_user: 3
+  # 全站每日投稿上限（A-5）
+  global_daily_limit: 25
+  # 額度以這個時區的 00:00 重置
+  timezone: Asia/Taipei
+  # 處理中的投稿超過這麼多分鐘還沒結束，就不再擋住使用者送出下一篇
+  stale_minutes: 10
+  # 同一帳號每分鐘最多幾次送出請求
+  rate_limit_per_minute: 3
+  # 月費用警戒線（美元）
+  monthly_budget_usd: 12
+  # 回饋模組（B-5）；第一個是預設勾選
+  modules: [verdict, jurors, scores, advice]
+  default_modules: [verdict]

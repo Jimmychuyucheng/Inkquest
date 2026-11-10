@@ -207,3 +207,34 @@
 ### W0 累計費用
 
 Haiku 70 次、Sonnet 5 次、注入補測 10 次，合計約 US$0.31。專案累計 96 次呼叫，約 US$0.32。
+
+## 2026-11-10 W1 Web App 骨架（程式完成，等待 Supabase 與 Google 登入設定後實測）
+
+- 做了什麼：
+  - `web/`：Next.js 16（App Router）＋ TypeScript ＋ Tailwind。新增套件（已先徵得同意）：`@supabase/ssr`、`yaml`、`vitest`。
+  - 共用設定：`scripts/sync-shared.mjs` 把根目錄 `shared/` 的人設、設定、prompt、schema 整理成 `src/generated/shared.json`（不進版控），dev／build／test 前自動執行；人設與 prompt 仍然只有 `shared/` 一份。
+  - 核心邏輯（`src/lib/core/`）：字數計算、分層抽選、計分、zod 驗證（陪審員與法官）、額度判斷與白話訊息。
+  - Python 與 TypeScript 的一致性：`research/export_parity_fixtures.py` 用 Python 算出標準答案（字數、5 個投稿 id 的抽選結果、10 組統計），TypeScript 的測試逐一比對。
+  - 資料庫（`web/supabase/migrations/0001_init.sql`）：7 張表、RLS、權限收回再授予、`create_submission`（同一交易內檢查額度並建立投稿，含鎖）、`get_quota_status`、`accept_terms`、新帳號自動建立 profile、Realtime。
+  - 登入與頁面：Google 登入、登入後導回、登出、條款同意（含選填的研究同意）、未登入不能進投稿頁、右上角頭像、今日剩餘次數、基本投稿表單、`POST /api/submissions`（身分、字數、模組、額度都在伺服器檢查）。
+  - `npm run seed`（人設與額度初始值）、`npm run test:db`（用真實 Supabase 測額度與權限，不呼叫 AI）。
+- 遇到的問題與解法：
+  - Next.js 16 預設啟用 Cache Components，讀登入狀態的頁面都要包 Suspense，寫法複雜 → 關閉，改用單純的每次請求在伺服器算頁面。
+  - 沒設定 Supabase 時，`/submit` 被建置成靜態頁（把「導回首頁」烤進去）→ 讀登入狀態前先呼叫 `connection()`，強制每次請求才算。
+  - Next.js 16 把 middleware 改名為 proxy；`cookies()` 與路由參數都變成非同步 → 依套件內附的文件寫。
+  - vitest 5 需要較新的 `@types/node`，安裝時衝突 → 一併升級 `@types/node`。
+  - Postgres 的 `\s` 與 JavaScript 對全形空白的認定可能不同 → 字數一律由伺服器的 TypeScript 計算後傳入資料庫，不在 SQL 裡算。
+  - 使用者若能直接呼叫建立投稿的資料庫函式，就能繞過字數檢查 → 該函式只開放給伺服器（service role），使用者的身分由伺服器確認後帶入。
+  - 處理中的投稿如果卡住，會永遠擋住使用者 → 超過 `stale_minutes`（10 分鐘）就不再擋。
+- AI 寫錯、我修正的地方：
+  - AI 在 zsh 寫 `for path in ...`，`path` 是 zsh 的特殊變數（等同 PATH），導致後面的指令全部找不到；改用別的變數名稱後重跑。
+  - AI 寫的測試用詩只有 19 字，低於新詩下限 20 字，是測試本身寫錯。
+  - AI 第一次建置後才發現 `/submit` 被當成靜態頁（見上）。
+- 測試方式與結果：
+  - `cd web && npm test`：65 項通過（核心邏輯、JSON 驗證、額度判斷、與 Python 的一致性）。
+  - `cd research && pytest`：112 項通過。
+  - `npm run typecheck`、`npm run lint`、`npm run build` 通過。
+  - 未設定 Supabase 時啟動正式建置版：首頁 200 並顯示設定提示、`/submit` 與 `/terms` 導回首頁、`/api/quota` 401、`POST /api/submissions` 回「請先登入再投稿。」；瀏覽器端程式碼中找不到 service role 金鑰的變數名稱。
+  - **尚未實測**：Google 登入、條款同意寫入、RLS、資料庫的額度函式（需要 Supabase 專案）；`npm run test:db` 已寫好，設定完成後執行。
+- API 用量與費用：0 次，US$0。
+- 延到 W2 的項目：送出頻率限制（每分鐘 3 次，需要記錄請求）、把投稿交給背景工作、正式環境偵測到 mock 即拒絕啟動。

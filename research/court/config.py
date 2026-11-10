@@ -89,6 +89,19 @@ class MockConfig(_Strict):
     failure_rate: float = Field(ge=0, le=1)
 
 
+class WebConfig(_Strict):
+    """Web App 的額度與限制；研究腳本不使用，但同一份設定檔要能通過檢查。"""
+
+    daily_quota_per_user: int = Field(ge=0)
+    global_daily_limit: int = Field(ge=0)
+    timezone: str
+    stale_minutes: int = Field(gt=0)
+    rate_limit_per_minute: int = Field(gt=0)
+    monthly_budget_usd: float = Field(ge=0)
+    modules: list[str] = Field(min_length=1)
+    default_modules: list[str] = Field(min_length=1)
+
+
 class Settings(_Strict):
     default_provider: ProviderName
     models: dict[str, str]
@@ -101,6 +114,7 @@ class Settings(_Strict):
     genres: dict[str, GenreRule]
     pricing: dict[str, Price]
     mock: MockConfig
+    web: WebConfig
 
     def estimate_cost_usd(self, model: str, input_tokens: int, output_tokens: int) -> float | None:
         """依設定檔的單價估算費用；沒有該模型的單價時回傳 None。"""

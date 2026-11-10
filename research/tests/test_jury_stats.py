@@ -143,3 +143,11 @@ def test_stats_with_missing_group_and_no_outputs(settings):
     assert stats.group_means == {"文學專業": 7.0, "一般讀者": None, "跨界視角": 5.0}
     with pytest.raises(ValueError):
         compute_stats({}, personas, settings.stats)
+
+
+def test_parity_fixture_file_is_in_sync():
+    # Web App 的測試靠這個檔確認 TypeScript 與 Python 算出相同結果。
+    # 改了抽選、計分或字數計算之後，要重新執行 `python export_parity_fixtures.py`。
+    import export_parity_fixtures
+
+    assert export_parity_fixtures.FIXTURE_PATH.read_text(encoding="utf-8") == export_parity_fixtures.render()
