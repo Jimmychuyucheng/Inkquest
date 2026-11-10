@@ -246,7 +246,7 @@ Haiku 70 次、Sonnet 5 次、注入補測 10 次，合計約 US$0.31。專案�
 - API 用量與費用：0 次，US$0。
 - 延到 W2 的項目：送出頻率限制（每分鐘 3 次，需要記錄請求）、把投稿交給背景工作、正式環境偵測到 mock 即拒絕啟動。
 
-## 2026-11-10 W2 投稿與背景工作（程式完成，等待執行 migration 與端對端實測）
+## 2026-11-10 W2 投稿與背景工作（端對端通過，等待瀏覽器與真實模型實測）
 
 - 做了什麼：
   - 模型呼叫層（`web/src/lib/llm/`）：`anthropic`（官方 TypeScript SDK、結構化輸出、逾時、關閉 SDK 內建重試、只印金鑰末四碼）與 `mock`（每位陪審員不同的假評語、可設定延遲與失敗率、可指定哪幾位失敗）。新增套件（已先徵得同意）：`inngest`、`@anthropic-ai/sdk`。
@@ -271,7 +271,10 @@ Haiku 70 次、Sonnet 5 次、注入補測 10 次，合計約 US$0.31。專案�
   - `npx vitest run --config vitest.db.config.mts`（已併入 `npm run test:db`）：4 項通過，用真實 Supabase 確認 10 筆陪審員結果、判決、修改建議、狀態、統計、失敗原因都正確寫入，失敗的投稿不佔額度。
   - `cd research && pytest`：112 項通過。`npm run typecheck`、`lint`、`build` 通過。
   - `/api/inngest` 回報已註冊背景工作（開發模式）。
-  - **尚未實測**：`0002_rate_limit.sql` 還沒在資料庫執行（`npm run test:db` 新增的兩項頻率限制測試要等它）；經由 Inngest 的端對端流程（`npm run test:e2e`）；瀏覽器上的即時進度；真實模型呼叫（TypeScript 的 Anthropic provider 只通過型別檢查，沒有實際呼叫過）。
+  - 執行 `0002_rate_limit.sql` 後，`npm run test:db`：25 項＋整合測試 4 項全部通過（新增「一分鐘內連續失敗 3 次後第 4 次被擋下」「過了一分鐘可以再送」）。
+  - `npm run test:e2e`（網站＋Inngest 開發伺服器＋真實 Supabase，假資料模型）：10 項全部通過。兩次開庭各約 9～11 秒完成（假資料每次呼叫延遲 1～3 秒），10 筆陪審員結果、判決、修改建議都寫入，使用者以自己的身分讀得到。
+  - 過程中發現 `.env.local` 的變數名稱打成 `NEXT_PUBLIC_SUPABASE__KEY`（少了 PUBLISHABLE），AI 只改名稱、沒有動值。
+  - **尚未實測**：瀏覽器上的即時進度（需要本人登入操作）；真實模型呼叫（TypeScript 的 Anthropic provider 只通過型別檢查，沒有實際呼叫過）。
 - API 用量與費用：0 次，US$0。
 - 自己做的決定（已寫進 PRD，待確認）：修改建議失敗不讓整次投稿失敗；修改建議的引句必須逐字來自原文；`submissions.error` 存原因代碼；開庭時的人設讀 `shared/`（與資料庫的 personas 表內容相同，後台管理人設的功能已延後）。
 - 已知問題：假資料模式的投稿仍會佔用每日次數（PRD 寫「mock 模式不扣額度」，要做到需要在 submissions 加一個欄位，尚未決定）；背景工作若完全沒有被執行（例如 Inngest 當機），投稿會停在「排隊中」，10 分鐘後不再擋住使用者，但狀態不會自動改成失敗。
