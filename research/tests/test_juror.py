@@ -34,7 +34,7 @@ def test_success_on_first_attempt(settings, mock_provider):
     assert result.status == "ok"
     assert result.attempts == 1
     assert result.juror_code == "J13"
-    assert result.persona_version == 1
+    assert result.persona_version == get_persona("J13").version
     assert result.error is None
     assert isinstance(result.output, JurorOutput)
 

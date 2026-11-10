@@ -6,7 +6,7 @@ import re
 from pathlib import Path
 
 from .config import SHARED_DIR, Settings
-from .personas import Persona
+from .personas import Persona, load_persona_file
 from .schemas import TAGS
 
 PROMPTS_DIR = SHARED_DIR / "prompts"
@@ -50,6 +50,9 @@ def build_juror_system(persona: Persona, genre: str) -> str:
             "genre": genre,
             "focus": persona.focus,
             "tone": persona.tone,
+            "voice_sample": persona.voice_sample,
+            "vocabulary_rule": persona.vocabulary_rule,
+            "group_rule": load_persona_file().group_rule_for(persona.group),
         },
     )
 
