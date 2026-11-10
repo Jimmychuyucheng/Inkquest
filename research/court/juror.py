@@ -31,6 +31,8 @@ class JurorResult(BaseModel):
     latency_ms: int = 0
     attempts: int = 0
     error: str | None = None
+    # 每次失敗嘗試的原因（即使最後成功也保留），用來了解重試是為了什麼
+    attempt_errors: list[str] = []
 
 
 def parse_juror_output(text: str, settings: Settings) -> JurorOutput:
@@ -99,6 +101,7 @@ async def run_juror(
             response = await provider.complete(request)
         except LLMCallError as exc:
             result.error = str(exc)
+            result.attempt_errors.append(str(exc))
             if not exc.retryable:
                 break
             continue
@@ -114,6 +117,7 @@ async def run_juror(
             result.output = parse_juror_output(response.text, settings)
         except OutputInvalid as exc:
             result.error = str(exc)
+            result.attempt_errors.append(str(exc))
             # 重試時告訴模型上次哪裡不合格（放在 </article> 之後，屬於我們的指示）
             retry_note = f"\n\n注意：你上一次的輸出不合格（{exc}）。請修正後重新輸出完整的 JSON。"
             continue

@@ -106,6 +106,9 @@ def main(argv: list[str] | None = None) -> int:
         file=sys.stderr,
     )
 
+    for number, reason in enumerate(result.attempt_errors, start=1):
+        print(f"第 {number} 次失敗的原因：{reason}", file=sys.stderr)
+
     if result.status != "ok":
         return fail(f"這次評閱沒有成功：{result.error}。請稍後再試一次。")
     return 0

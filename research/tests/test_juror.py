@@ -58,6 +58,9 @@ def test_invalid_output_then_valid_retries_once(settings):
     assert result.status == "ok"
     assert result.attempts == 2
     assert result.output.score == 7
+    # 最後成功時 error 清空，但仍留下第一次失敗的原因
+    assert result.error is None
+    assert len(result.attempt_errors) == 1 and "score" in result.attempt_errors[0]
     # 第二次的 prompt 會說明上次哪裡不合格，而且寫在待評區塊之後
     retry_user = provider.requests[1].user
     assert "上一次的輸出不合格" in retry_user
