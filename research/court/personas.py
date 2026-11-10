@@ -26,7 +26,7 @@ class Persona(BaseModel):
     background: str
     focus: str
     tone: str
-    voice_sample: str = Field(min_length=1)
+    voice_traits: str = Field(min_length=1)
     vocabulary_rule: str = Field(min_length=1)
     enabled: bool = True
     version: int = Field(default=1, ge=1)

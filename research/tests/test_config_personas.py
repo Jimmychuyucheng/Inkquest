@@ -38,7 +38,7 @@ def test_twenty_personas_in_three_groups():
     assert [p.code for p in personas] == [f"J{i:02d}" for i in range(1, 21)]
     assert Counter(p.group for p in personas) == {"文學專業": 6, "一般讀者": 6, "跨界視角": 8}
     assert all(p.background and p.focus and p.tone for p in personas)
-    assert all(p.voice_sample and p.vocabulary_rule for p in personas)
+    assert all(p.voice_traits and p.vocabulary_rule for p in personas)
 
 
 def test_get_persona_is_case_insensitive_and_reports_unknown():

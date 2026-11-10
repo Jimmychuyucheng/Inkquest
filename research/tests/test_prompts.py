@@ -20,10 +20,13 @@ def test_system_prompt_fills_persona_and_declares_article_is_not_instructions():
     assert "{" not in system and "}" not in system
 
 
-def test_system_prompt_includes_voice_sample_and_vocabulary_rule():
+def test_system_prompt_includes_voice_traits_and_vocabulary_rule():
     for persona in load_personas():
         system = build_juror_system(persona, "散文")
-        assert persona.voice_sample in system
+        assert persona.voice_traits in system
+        assert "這是描述，不是台詞" in system
+        assert "必須忠於原文，不要自己補人物、情節或數量" in system
+        assert "那是你的經驗，不是文章寫的" in system
         assert persona.vocabulary_rule in system
         assert "每一個欄位都要用你自己的口吻寫" in system
         assert "{" not in system and "}" not in system
@@ -50,12 +53,13 @@ def test_lay_persona_own_text_does_not_use_banned_terms():
     banned = load_persona_file().lay_banned_terms
     for persona in load_personas():
         if persona.group in LAY_GROUPS:
-            own_text = persona.voice_sample + persona.vocabulary_rule + persona.focus + persona.tone
+            own_text = persona.voice_traits + persona.vocabulary_rule + persona.focus + persona.tone
             assert not [term for term in banned if term in own_text], persona.code
 
 
 def test_fifth_grader_rules():
     rule = get_persona("J15").vocabulary_rule
+    assert "用十歲小孩會用的詞" in rule and "五年級課本裡不會出現" in rule
     for phrase in ("句子很短", "好好笑", "有點無聊", "我看不懂", "學校、卡通、遊戲、家裡"):
         assert phrase in rule
 

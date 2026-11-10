@@ -50,7 +50,7 @@ def build_juror_system(persona: Persona, genre: str) -> str:
             "genre": genre,
             "focus": persona.focus,
             "tone": persona.tone,
-            "voice_sample": persona.voice_sample,
+            "voice_traits": persona.voice_traits,
             "vocabulary_rule": persona.vocabulary_rule,
             "group_rule": load_persona_file().group_rule_for(persona.group),
         },
