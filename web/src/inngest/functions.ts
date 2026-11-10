@@ -1,10 +1,10 @@
 // 開庭的背景工作：每個階段是一個步驟，使用者關閉頁面後仍會繼續（PRD C-4）。
 import { personas, settings } from "@/lib/core/shared";
-import { PHASES, failCourt, type CourtDeps } from "@/lib/court/pipeline";
+import { PHASES, failCourt, runAdviceAddon, type CourtDeps } from "@/lib/court/pipeline";
 import { createSupabaseStore } from "@/lib/court/store";
 import { getProvider } from "@/lib/llm";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { COURT_EVENT, inngest } from "./client";
+import { ADVICE_EVENT, COURT_EVENT, inngest } from "./client";
 
 function deps(): CourtDeps {
   return { store: createSupabaseStore(createAdminClient()), provider: getProvider(settings), settings, personas };
@@ -33,4 +33,23 @@ export const holdCourt = inngest.createFunction(
   },
 );
 
-export const functions = [holdCourt];
+export const addAdvice = inngest.createFunction(
+  {
+    id: "add-advice",
+    triggers: [{ event: ADVICE_EVENT }],
+    retries: 1,
+    // 工作本身出錯時，把狀態改回 done：判決還在，只是沒有修改建議
+    onFailure: async ({ event }) => {
+      const id = String(event.data.event.data.submissionId ?? "");
+      if (!id) return;
+      await createAdminClient().from("submissions").update({ status: "done" }).eq("id", id).eq("status", "advice_running");
+    },
+  },
+  async ({ event, step }) => {
+    const id = String(event.data.submissionId);
+    const result = await step.run("advice", () => runAdviceAddon(id, deps()));
+    return { submissionId: id, note: result.note };
+  },
+);
+
+export const functions = [holdCourt, addAdvice];

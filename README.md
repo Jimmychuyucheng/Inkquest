@@ -133,6 +133,7 @@ npm run dev         # 本機啟動 http://localhost:3000
 npm test            # 單元測試（不需要資料庫、不呼叫 AI）
 npm run test:db     # 用真實的 Supabase 測試額度、資料權限與開庭結果的寫入（會建立並刪除測試帳號，不呼叫 AI）
 npm run test:e2e    # 端對端：經由背景工作跑完一次開庭（需先啟動網站與 Inngest 開發伺服器，不呼叫 AI）
+npm run test:pages  # 頁面測試：以測試帳號登入、投稿，檢查結果頁、補勾模組、歷史紀錄與刪除（同樣需先啟動兩個伺服器，不呼叫 AI）
 npm run typecheck   # 型別檢查
 npm run lint
 npm run build       # 正式建置

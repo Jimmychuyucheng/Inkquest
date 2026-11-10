@@ -28,12 +28,12 @@ export function LoginButton() {
         type="button"
         onClick={signIn}
         disabled={busy}
-        className="rounded bg-stone-900 px-5 py-2.5 text-white disabled:opacity-60"
+        className="rounded-lg bg-secondary px-5 py-2.5 font-medium text-secondary-foreground disabled:opacity-60"
       >
         {copy.login}
       </button>
       {failed && (
-        <p role="alert" className="mt-2 text-sm text-red-700">
+        <p role="alert" className="mt-2 text-sm text-amber-200">
           {copy.loginFailed}
         </p>
       )}

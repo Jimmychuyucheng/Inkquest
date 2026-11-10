@@ -1,29 +1,32 @@
 "use client";
-// 開庭的即時進度（PRD C-3）：背景工作把進度寫進資料庫，這裡透過 Supabase Realtime 接收。
-// 另外固定每 2 秒向資料庫查一次當作保險：即使 Realtime 沒有送來事件，畫面仍會更新。
+// 開庭中（PRD 第 7 節）：本次 10 位陪審員的圖示，完成者亮起；進度條；法官撰寫判決書的提示。
+// 進度由背景工作寫進資料庫，這裡透過 Supabase Realtime 接收；
+// 另外固定每 2 秒查一次當作保險，即使 Realtime 沒有送來事件，畫面仍會更新（C-3）。
+import { Gavel } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { PersonaIcon, personaByCode } from "@/components/persona-icon";
+import { Progress } from "@/components/ui/progress";
 import { copy } from "@/lib/copy";
-import { personas } from "@/lib/core/shared";
 import { createClient } from "@/lib/supabase/client";
 
-interface Progress {
+export interface CourtProgressState {
   status: string;
   error: string | null;
   jury: string[];
   results: { juror_code: string; status: string }[];
 }
 
-const FINAL = ["done", "failed"];
+// 這些狀態下，伺服器端的頁面已經有新內容（判決或失敗說明），要重新載入
+const SETTLED = ["advice_running", "done", "failed"];
 const POLL_MS = 2000;
-const nameOf = Object.fromEntries(personas.map((p) => [p.code, p.name]));
 
-export function CourtProgress({ id, initial }: { id: string; initial: Progress }) {
+export function CourtProgress({ id, initial }: { id: string; initial: CourtProgressState }) {
   const t = copy.court;
   const router = useRouter();
   const [progress, setProgress] = useState(initial);
-  const finished = FINAL.includes(progress.status);
-  const wasFinished = useRef(FINAL.includes(initial.status));
+  const settled = SETTLED.includes(progress.status);
+  const refreshed = useRef(false);
 
   const refetch = useCallback(async () => {
     const supabase = createClient();
@@ -40,9 +43,8 @@ export function CourtProgress({ id, initial }: { id: string; initial: Progress }
     });
   }, [id]);
 
-  // 即時訂閱：投稿狀態與每位陪審員的結果
   useEffect(() => {
-    if (finished) return;
+    if (settled) return;
     const supabase = createClient();
     let cancelled = false;
     let channel: ReturnType<typeof supabase.channel> | null = null;
@@ -56,7 +58,6 @@ export function CourtProgress({ id, initial }: { id: string; initial: Progress }
         .on("postgres_changes", { event: "*", schema: "public", table: "submissions", filter: `id=eq.${id}` }, refetch)
         .on("postgres_changes", { event: "*", schema: "public", table: "juror_results", filter: `submission_id=eq.${id}` }, refetch)
         .subscribe((state) => {
-          // 訂閱成功的當下補查一次，避免漏掉連線前發生的變化
           if (state === "SUBSCRIBED") void refetch();
         });
     })();
@@ -64,57 +65,74 @@ export function CourtProgress({ id, initial }: { id: string; initial: Progress }
       cancelled = true;
       if (channel) void supabase.removeChannel(channel);
     };
-  }, [id, finished, refetch]);
+  }, [id, settled, refetch]);
 
-  // 保險：開庭期間固定每 2 秒查一次（PRD C-3：至少每 2 秒更新）
   useEffect(() => {
-    if (finished) return;
+    if (settled) return;
     const timer = setInterval(() => void refetch(), POLL_MS);
     return () => clearInterval(timer);
-  }, [finished, refetch]);
+  }, [settled, refetch]);
 
-  // 結束時請伺服器重新產生頁面，帶出判決
   useEffect(() => {
-    if (finished && !wasFinished.current) {
-      wasFinished.current = true;
+    if (settled && !refreshed.current) {
+      refreshed.current = true;
       router.refresh();
     }
-  }, [finished, router]);
+  }, [settled, router]);
 
   const statusOf = Object.fromEntries(progress.results.map((r) => [r.juror_code, r.status]));
-  const doneCount = progress.results.length;
+  const total = progress.jury.length;
+  const doneCount = progress.jury.filter((code) => statusOf[code]).length;
+  const judging = progress.status === "judge_running";
+  // 陪審員佔九成，法官佔最後一成
+  const percent = total === 0 ? 3 : judging ? 95 : Math.round((doneCount / total) * 90);
 
   return (
-    <section className="space-y-4" aria-live="polite">
-      <p className="font-medium">
-        {t.status[progress.status] ?? progress.status}
-        {progress.jury.length > 0 && !finished && (
-          <span className="ml-2 font-normal text-stone-600">{t.jurorsDone(doneCount, progress.jury.length)}</span>
-        )}
-      </p>
-      {progress.status === "failed" && (
-        <p role="alert" className="rounded border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
-          {t.failure[progress.error ?? ""] ?? t.failure.internal}
+    <section className="space-y-6" aria-live="polite">
+      <div className="space-y-2">
+        <p className="flex items-center gap-2 font-heading text-xl">
+          {judging && <Gavel className="size-5 animate-pulse text-brass" aria-hidden />}
+          {judging ? t.judgeWriting : (t.status[progress.status] ?? progress.status)}
         </p>
-      )}
-      {progress.jury.length > 0 && (
-        <ul className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+        <Progress value={percent} aria-label={t.progress} />
+        {total > 0 && <p className="text-sm text-muted-foreground">{t.jurorsDone(doneCount, total)}</p>}
+      </div>
+
+      {total > 0 && (
+        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-5">
           {progress.jury.map((code) => {
             const state = statusOf[code];
             const label = state === "ok" ? t.jurorOk : state === "failed" ? t.jurorFailed : t.jurorWaiting;
             return (
-              <li
-                key={code}
-                className={`rounded border p-2 text-sm ${state === "ok" ? "border-stone-800" : state === "failed" ? "border-stone-200 text-stone-400" : "border-dashed border-stone-300 text-stone-500"}`}
-              >
-                <span className="block font-medium">{nameOf[code] ?? code}</span>
-                <span className="text-xs">{label}</span>
+              <li key={code} className="flex flex-col items-center gap-1.5 rounded-lg border bg-card p-3 text-center">
+                <PersonaIcon code={code} size="lg" dim={state !== "ok"} />
+                <span className={`text-sm font-medium ${state === "ok" ? "" : "text-muted-foreground"}`}>
+                  {personaByCode[code]?.name ?? code}
+                </span>
+                <span className="text-xs text-muted-foreground">{label}</span>
               </li>
             );
           })}
         </ul>
       )}
-      {!finished && <p className="text-sm text-stone-600">{t.canLeave}</p>}
+      <p className="text-sm text-muted-foreground">{t.canLeave}</p>
     </section>
   );
+}
+
+/** 等待某個狀態結束（例如補勾的修改建議生成中）：每 2 秒查一次，結束後重新載入頁面。 */
+export function WaitForStatus({ id, whileStatus }: { id: string; whileStatus: string }) {
+  const router = useRouter();
+  useEffect(() => {
+    const supabase = createClient();
+    const timer = setInterval(async () => {
+      const { data } = await supabase.from("submissions").select("status").eq("id", id).maybeSingle();
+      if (!data || data.status !== whileStatus) {
+        clearInterval(timer);
+        router.refresh();
+      }
+    }, POLL_MS);
+    return () => clearInterval(timer);
+  }, [id, whileStatus, router]);
+  return null;
 }

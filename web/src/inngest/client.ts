@@ -4,6 +4,8 @@
 import { Inngest } from "inngest";
 
 export const COURT_EVENT = "court/submission.created";
+/** 結果頁補勾修改建議（PRD D-4）。 */
+export const ADVICE_EVENT = "court/advice.requested";
 
 export const inngest = new Inngest({
   id: "inkquest",

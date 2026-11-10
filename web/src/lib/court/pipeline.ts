@@ -182,6 +182,37 @@ export async function finishCourt(id: string, deps: CourtDeps): Promise<PhaseRes
   return go("完成");
 }
 
+/**
+ * 結果頁補勾「修改建議」（PRD D-4）：對已經完成的投稿另外生成，不扣次數，每篇最多一筆。
+ * 呼叫前，API 已經把狀態從 done 改成 advice_running（同時只會有一個請求改成功）。
+ * 不論成功或失敗，最後都回到 done：判決已經存在，不能因為修改建議失敗而變成失敗的投稿。
+ */
+export async function runAdviceAddon(id: string, deps: CourtDeps): Promise<PhaseResult> {
+  const { store, settings, provider } = deps;
+  const submission = await store.getSubmission(id);
+  if (!submission || submission.status !== "advice_running") return stop("投稿不存在，或不在等待修改建議的狀態");
+  let note = "修改建議已存在";
+  try {
+    const verdict = await store.getVerdict(id);
+    if (!verdict) {
+      note = "沒有判決，無法產生修改建議";
+    } else if (!(await store.hasAdvice(id))) {
+      const personaByCode = Object.fromEntries(deps.personas.map((p) => [p.code, p]));
+      const payload = buildJuryPayload(await store.getJurorResults(id), personaByCode);
+      const result = await runAdvice(submission, verdict, payload, settings, provider);
+      if (result.status === "ok" && result.output) {
+        await store.saveAdvice(id, result);
+        note = "修改建議完成";
+      } else {
+        note = `修改建議沒有成功：${result.error ?? ""}`;
+      }
+    }
+  } finally {
+    await store.updateSubmission(id, { status: "done" });
+  }
+  return go(note);
+}
+
 export const PHASES = [
   ["start", startCourt],
   ["jurors", runJurorPhase],

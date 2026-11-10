@@ -13,9 +13,9 @@ export default async function TermsPage({
   const t = copy.terms;
   return (
     <div className="max-w-2xl space-y-6">
-      <h1 className="text-2xl font-semibold">{t.title}</h1>
-      <p className="text-stone-700">{t.intro}</p>
-      <ul className="list-disc space-y-2 pl-5 text-stone-700">
+      <h1 className="font-heading text-2xl font-semibold">{t.title}</h1>
+      <p className="text-muted-foreground">{t.intro}</p>
+      <ul className="list-disc space-y-2 rounded-lg border bg-card py-5 pl-9 pr-5 leading-relaxed">
         {t.items.map((item) => (
           <li key={item}>{item}</li>
         ))}
@@ -35,11 +35,11 @@ export default async function TermsPage({
           <span>{t.research}</span>
         </label>
         {params.error && (
-          <p role="alert" className="text-sm text-red-700">
+          <p role="alert" className="text-sm text-destructive">
             {params.error === "agree" ? t.mustAgree : copy.errors.generic}
           </p>
         )}
-        <button type="submit" className="rounded bg-stone-900 px-5 py-2.5 text-white">
+        <button type="submit" className="rounded-lg bg-primary px-5 py-2.5 font-medium text-primary-foreground">
           {t.submit}
         </button>
       </form>

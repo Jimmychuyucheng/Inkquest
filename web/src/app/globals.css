@@ -1,20 +1,90 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-/* 視覺方向（PRD 第 7 節）：米白底、沉穩深色字。完整的主題在 W3 處理。 */
-:root {
-  --background: #faf7f0;
-  --foreground: #1c1917;
-}
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
   --font-serif: "Noto Serif TC", "Songti TC", "PMingLiU", serif;
+  --font-heading: "Noto Serif TC", "Songti TC", "PMingLiU", serif;
+  --color-brass: var(--brass);
+  --color-group-pro: var(--group-pro);
+  --color-group-lay: var(--group-lay);
+  --color-group-cross: var(--group-cross);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans);
+:root {
+  /* 視覺方向（PRD 第 7 節）：法庭＋文學。米白底、墨藍主色、黃銅點綴。 */
+  --background: #faf7f0;
+  --foreground: #1c1917;
+  --card: #fffdf8;
+  --card-foreground: #1c1917;
+  --popover: #fffdf8;
+  --popover-foreground: #1c1917;
+  --primary: #1f2a44;
+  --primary-foreground: #faf7f0;
+  --secondary: #efe9dc;
+  --secondary-foreground: #1f2a44;
+  --muted: #f1ece1;
+  --muted-foreground: #6b645a;
+  --accent: #efe9dc;
+  --accent-foreground: #1f2a44;
+  --destructive: #b3261e;
+  --border: #ddd5c5;
+  --input: #cfc6b4;
+  --ring: #8a7a55;
+  --chart-1: #1f2a44;
+  --chart-2: #8a7a55;
+  --chart-3: #8c2f39;
+  --chart-4: #2f6f6a;
+  --chart-5: #a8741a;
+  --radius: 0.5rem;
+  /* 黃銅色：法槌、強調線 */
+  --brass: #8a7a55;
+  /* 三個組別的識別色：卡片邊框與標籤 */
+  --group-pro: #8c2f39;
+  --group-lay: #2f6f6a;
+  --group-cross: #a8741a;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
 }

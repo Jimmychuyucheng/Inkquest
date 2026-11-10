@@ -18,6 +18,7 @@ import { assertProviderAllowed, getProvider, resolveProviderName } from "@/lib/l
 import { MockProvider, mockAdviceOutput, mockJudgeOutput, mockJurorOutput, type MockOptions } from "@/lib/llm/mock";
 import { LLMCallError, type LLMProvider, type LLMRequest, type LLMResponse } from "@/lib/llm/types";
 import {
+  runAdviceAddon,
   runCourt,
   runJurorPhase,
   startCourt,
@@ -357,6 +358,57 @@ describe("完整開庭流程", () => {
     await runCourt(ID, deps);
     expect(state.submission?.status).toBe("done");
     expect([...state.jurors.values()].some((r) => r.attempts > 1)).toBe(true);
+  });
+});
+
+describe("結果頁補勾修改建議（D-4）", () => {
+  async function finished() {
+    const ctx = setup();
+    await runCourt(ID, ctx.deps);
+    // API 會先把模組加上、狀態改成 advice_running，再交給背景工作
+    Object.assign(ctx.state.submission!, { modules: ["verdict", "advice"], status: "advice_running" });
+    ctx.state.statuses.length = 0;
+    return ctx;
+  }
+
+  it("對已完成的投稿另外生成 1 次，完成後狀態回到 done", async () => {
+    const { state, deps, calls } = await finished();
+    const result = await runAdviceAddon(ID, deps);
+    expect(result.note).toBe("修改建議完成");
+    expect(calls("advice")).toHaveLength(1);
+    expect(calls("juror")).toHaveLength(10); // 陪審員與法官不會重跑
+    expect(calls("judge")).toHaveLength(1);
+    expect(state.advice?.output?.suggestions.length).toBeGreaterThanOrEqual(3);
+    expect(state.submission?.status).toBe("done");
+  });
+
+  it("每篇最多一筆：已經有修改建議就不再呼叫", async () => {
+    const { state, deps, calls } = await finished();
+    await runAdviceAddon(ID, deps);
+    state.submission!.status = "advice_running";
+    await runAdviceAddon(ID, deps);
+    expect(calls("advice")).toHaveLength(1);
+    expect(state.submission?.status).toBe("done");
+  });
+
+  it("生成失敗時狀態仍回到 done，判決不受影響", async () => {
+    const { state, deps, provider } = await finished();
+    provider.complete = async () => {
+      throw new LLMCallError("模型拒絕處理這段內容", { retryable: false });
+    };
+    const result = await runAdviceAddon(ID, deps);
+    expect(result.note).toContain("沒有成功");
+    expect(state.submission?.status).toBe("done");
+    expect(state.submission?.error ?? null).toBeNull(); // 沒有被標成失敗
+    expect(state.advice).toBeNull();
+    expect(state.verdict).not.toBeNull();
+  });
+
+  it("狀態不是 advice_running（例如直接觸發事件）時不做任何事", async () => {
+    const { state, deps, calls } = await finished();
+    state.submission!.status = "done";
+    expect((await runAdviceAddon(ID, deps)).proceed).toBe(false);
+    expect(calls("advice")).toHaveLength(0);
   });
 });
 
