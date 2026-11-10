@@ -5,6 +5,7 @@ import { adminGuard } from "@/lib/admin-api";
 import { copy } from "@/lib/copy";
 import { buildCsv, formatLocal, type ExportSubmission } from "@/lib/core/export";
 import { settings } from "@/lib/core/shared";
+import { researchExportSalt } from "@/lib/env";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const PAGE = 1000; // Supabase 一次最多回傳的筆數
@@ -12,6 +13,9 @@ const PAGE = 1000; // Supabase 一次最多回傳的筆數
 export async function GET(request: NextRequest) {
   const denied = await adminGuard();
   if (denied) return denied;
+
+  const salt = researchExportSalt();
+  if (salt === "") return NextResponse.json({ message: copy.admin.saltMissing }, { status: 500 });
 
   const includeAll = request.nextUrl.searchParams.get("all") === "1";
   const admin = createAdminClient();
@@ -43,7 +47,7 @@ export async function GET(request: NextRequest) {
 
   const stamp = formatLocal(new Date().toISOString(), settings.web.timezone).slice(0, 10);
   const filename = `inkquest-submissions-${stamp}${includeAll ? "-all" : ""}.csv`;
-  return new NextResponse(buildCsv(rows, settings.web.timezone), {
+  return new NextResponse(buildCsv(rows, settings.web.timezone, salt), {
     headers: {
       "Content-Type": "text/csv; charset=utf-8",
       "Content-Disposition": `attachment; filename="${filename}"`,

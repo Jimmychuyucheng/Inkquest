@@ -1,4 +1,5 @@
 // 後台的純邏輯測試：費用估算、月費用警戒線、額度設定的格式檢查、匯出 CSV。
+import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import { settingsUpdateSchema, userQuotaSchema } from "./admin";
 import { anonymousCode, buildCsv, EXPORT_COLUMNS, formatLocal, type ExportSubmission } from "./export";
@@ -137,10 +138,11 @@ describe("匯出投稿統計 CSV", () => {
     ...changes,
   });
 
+  const SALT = "test-salt-not-a-real-secret";
   const parse = (csv: string) => csv.replace(/^﻿/, "").trimEnd().split("\r\n").map((line) => line.split(","));
 
   it("開頭有 BOM，第一列是欄位名稱，含 20 位陪審員欄位", () => {
-    const csv = buildCsv([row()], "Asia/Taipei");
+    const csv = buildCsv([row()], "Asia/Taipei", SALT);
     expect(csv.startsWith("﻿")).toBe(true);
     const [header] = parse(csv);
     expect(header).toEqual(EXPORT_COLUMNS);
@@ -151,7 +153,7 @@ describe("匯出投稿統計 CSV", () => {
   });
 
   it("每筆投稿一列，數值、各組平均、陪審員分數放在對的欄位", () => {
-    const [header, values] = parse(buildCsv([row()], "Asia/Taipei"));
+    const [header, values] = parse(buildCsv([row()], "Asia/Taipei", SALT));
     const get = (name: string) => values[header.indexOf(name)];
     expect(get("genre")).toBe("散文");
     expect(get("char_count")).toBe("1520");
@@ -170,36 +172,45 @@ describe("匯出投稿統計 CSV", () => {
   });
 
   it("失敗的投稿沒有統計，欄位留空", () => {
-    const [header, values] = parse(buildCsv([row({ status: "failed", stats: null, finished_at: null, juror_results: [] })], "Asia/Taipei"));
+    const [header, values] = parse(buildCsv([row({ status: "failed", stats: null, finished_at: null, juror_results: [] })], "Asia/Taipei", SALT));
     expect(values[header.indexOf("mean_score")]).toBe("");
     expect(values[header.indexOf("finished_at")]).toBe("");
   });
 
   it("使用者以匿名代號表示：同一人相同、不同人不同、看不出原本的 id", () => {
-    const a = anonymousCode("6f1c1f0e-1111-4222-8333-444455556666");
+    const a = anonymousCode("6f1c1f0e-1111-4222-8333-444455556666", SALT);
     expect(a).toMatch(/^U[0-9a-f]{10}$/);
-    expect(anonymousCode("6f1c1f0e-1111-4222-8333-444455556666")).toBe(a);
-    expect(anonymousCode("00000000-0000-4000-8000-000000000000")).not.toBe(a);
-    const csv = buildCsv([row()], "Asia/Taipei");
+    expect(anonymousCode("6f1c1f0e-1111-4222-8333-444455556666", SALT)).toBe(a);
+    expect(anonymousCode("00000000-0000-4000-8000-000000000000", SALT)).not.toBe(a);
+    const csv = buildCsv([row()], "Asia/Taipei", SALT);
     expect(csv).not.toContain("6f1c1f0e");
     expect(csv).toContain(a);
   });
 
+  it("代號依密鑰而定：沒有密鑰算不出來，不同密鑰得到不同代號", () => {
+    const id = "6f1c1f0e-1111-4222-8333-444455556666";
+    expect(anonymousCode(id, "another-salt")).not.toBe(anonymousCode(id, SALT));
+    // 不是單純的 sha256(user id)：拿到 user id 的人無法自己算出代號
+    const plain = `U${createHash("sha256").update(id).digest("hex").slice(0, 10)}`;
+    expect(anonymousCode(id, SALT)).not.toBe(plain);
+    expect(() => anonymousCode(id, "")).toThrow();
+  });
+
   it("不含文章內容、標題與 email，即使資料裡混進了這些欄位", () => {
     const leaky = { ...row(), content: "外婆家的晾衣竿", title: "秘密標題", email: "someone@example.com" } as ExportSubmission;
-    const csv = buildCsv([leaky], "Asia/Taipei");
+    const csv = buildCsv([leaky], "Asia/Taipei", SALT);
     expect(csv).not.toContain("晾衣竿");
     expect(csv).not.toContain("秘密標題");
     expect(csv).not.toContain("@example.com");
   });
 
   it("含逗號或引號的值會加上引號", () => {
-    const csv = buildCsv([row({ genre: '散,文"' })], "Asia/Taipei");
+    const csv = buildCsv([row({ genre: '散,文"' })], "Asia/Taipei", SALT);
     expect(csv).toContain('"散,文"""');
   });
 
   it("沒有資料時只有欄位名稱", () => {
-    expect(parse(buildCsv([], "Asia/Taipei"))).toHaveLength(1);
+    expect(parse(buildCsv([], "Asia/Taipei", SALT))).toHaveLength(1);
   });
 
   it("時間轉成台北時間", () => {

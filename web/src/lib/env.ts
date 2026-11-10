@@ -17,3 +17,11 @@ export function serviceRoleKey(): string {
   if (key === "") throw new Error("缺少 SUPABASE_SECRET_KEY");
   return key;
 }
+
+/** 匯出投稿統計的匿名代號密鑰：只能在伺服器端使用；沒設定時回傳空字串。 */
+export function researchExportSalt(): string {
+  if (typeof window !== "undefined") {
+    throw new Error("匿名代號密鑰不可在瀏覽器端使用");
+  }
+  return process.env.RESEARCH_EXPORT_SALT ?? "";
+}

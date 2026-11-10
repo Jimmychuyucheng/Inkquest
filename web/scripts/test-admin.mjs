@@ -4,12 +4,14 @@
 // 會暫時修改 settings 表的額度與預算，結束時（包含失敗時）一定改回原值。
 // 會建立並刪除兩個測試帳號。
 //
-// 執行前請先：在 Supabase 執行 0004_admin_usage.sql，並啟動網站（npm run dev）。
+// 執行前請先：在 Supabase 執行 0004、0005 的 SQL，並啟動網站（npm run dev）。
+// 注意：用量紀錄表只能新增，測試產生的紀錄（假資料，0 token、0 元）會永久留著。
+import { createHmac } from "node:crypto";
 import { createServerClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
 import { loadEnv } from "./env.mjs";
 
-const env = loadEnv(["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY", "SUPABASE_SECRET_KEY"]);
+const env = loadEnv(["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY", "SUPABASE_SECRET_KEY", "RESEARCH_EXPORT_SALT"]);
 const SITE = env.TEST_SITE_URL ?? "http://localhost:3000";
 const admin = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SECRET_KEY, { auth: { persistSession: false } });
 
@@ -46,7 +48,7 @@ async function makeUser(label, { role = "user", consent = false } = {}) {
       body: body ? JSON.stringify(body) : undefined,
       redirect: "manual",
     });
-  return { user, email, request };
+  return { user, email, request, client };
 }
 
 const SECRET_TEXT = "後台測試專用的晾衣竿句子";
@@ -115,6 +117,22 @@ try {
   const { data: memberProfile } = await admin.from("profiles").select("daily_quota_override").eq("id", member.user.id).single();
   check("被拒絕的請求沒有改到任何資料", memberProfile.daily_quota_override === null);
 
+  // 繞過網站，直接拿瀏覽器拿得到的 publishable key 呼叫資料庫
+  const visitor = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, { auth: { persistSession: false } });
+  const since = { p_since: new Date(0).toISOString() };
+  let direct = await visitor.rpc("admin_usage", since);
+  check("未登入的訪客直接呼叫 admin_usage 被拒絕", direct.error !== null && direct.data === null, JSON.stringify(direct.data));
+  direct = await member.client.rpc("admin_usage", since);
+  check("一般登入使用者直接呼叫 admin_usage 被拒絕", direct.error !== null && direct.data === null, JSON.stringify(direct.data));
+  direct = await member.client.rpc("get_quota_status", { p_user_id: other.user.id });
+  check("一般登入使用者不能直接查別人的額度", direct.error !== null && direct.data === null);
+  direct = await member.client.from("usage_log").select("*");
+  check("一般登入使用者讀不到用量紀錄", direct.error !== null || (direct.data ?? []).length === 0, `讀到 ${(direct.data ?? []).length} 筆`);
+  direct = await visitor.from("usage_log").select("*");
+  check("未登入的訪客讀不到用量紀錄", direct.error !== null || (direct.data ?? []).length === 0, `讀到 ${(direct.data ?? []).length} 筆`);
+  direct = await member.client.from("settings").update({ value: 99 }).eq("key", "daily_quota_per_user").select();
+  check("一般登入使用者不能直接改 settings", direct.error !== null || (direct.data ?? []).length === 0);
+
   console.log("用量總覽");
   await insertDone(member.user.id);
   await insertDone(other.user.id);
@@ -126,6 +144,28 @@ try {
   check("後台頁面不含文章內容與標題", !html.includes(SECRET_TEXT) && !html.includes(SECRET_TITLE));
   const { data: usage } = await admin.rpc("admin_usage", { p_since: new Date(Date.now() - 60_000).toISOString() });
   check("用量統計算得到剛寫入的投稿與陪審員紀錄", (usage?.submissions?.done ?? 0) >= 2 && usage.tokens.some((t) => t.source === "juror" && t.calls >= 4), JSON.stringify(usage));
+
+  console.log("用量紀錄（只能新增，刪除投稿後保留）");
+  const doomed = await insertDone(member.user.id);
+  await admin.from("verdicts").insert({ submission_id: doomed, output: {}, model: "mock", input_tokens: 0, output_tokens: 0 });
+  let log = await admin.from("usage_log").select("id, source, juror_code, model").eq("submission_id", doomed);
+  check("寫入陪審員結果與判決時自動記錄用量", (log.data ?? []).length === 3 && log.data.filter((r) => r.source === "juror").length === 2, JSON.stringify(log.data));
+  check("用量紀錄不含文章內容、標題、email 與 user id", !JSON.stringify(log.data).match(/晾衣竿|秘密標題|@example\.com/) && !JSON.stringify(log.data).includes(member.user.id));
+  await admin.from("juror_results").update({ input_tokens: 0, output_tokens: 0 }).eq("submission_id", doomed).eq("juror_code", "J01");
+  log = await admin.from("usage_log").select("id").eq("submission_id", doomed);
+  check("結果重寫（背景工作重跑）時再記一筆", (log.data ?? []).length === 4, `共 ${(log.data ?? []).length} 筆`);
+  const removed = await member.client.from("submissions").delete().eq("id", doomed);
+  log = await admin.from("usage_log").select("id").eq("submission_id", doomed);
+  check("使用者刪除投稿後，用量紀錄仍然保留", !removed.error && (log.data ?? []).length === 4, `共 ${(log.data ?? []).length} 筆`);
+  const firstId = log.data?.[0]?.id;
+  const upd = await admin.from("usage_log").update({ input_tokens: 0 }).eq("id", firstId).select();
+  check("連伺服器也不能修改用量紀錄", upd.error !== null);
+  const del = await admin.from("usage_log").delete().eq("id", firstId).select();
+  check("連伺服器也不能刪除用量紀錄", del.error !== null);
+  const ins = await admin.from("usage_log").insert({ submission_id: doomed, source: "juror", model: "fake", input_tokens: 1, output_tokens: 1 }).select();
+  check("程式不能自己寫入用量紀錄（只能經由結果表自動記錄）", ins.error !== null);
+  log = await admin.from("usage_log").select("id").eq("submission_id", doomed);
+  check("以上操作之後紀錄數不變", (log.data ?? []).length === 4, `共 ${(log.data ?? []).length} 筆`);
 
   console.log("額度調整");
   res = await boss.request("PATCH", "/api/admin/settings", { daily_quota_per_user: -1 });
@@ -172,8 +212,9 @@ try {
   console.log("匯出 CSV");
   res = await boss.request("GET", "/api/admin/export");
   let csv = await res.text();
-  const memberCode = (await import("node:crypto")).createHash("sha256").update(member.user.id).digest("hex").slice(0, 10);
-  const otherCode = (await import("node:crypto")).createHash("sha256").update(other.user.id).digest("hex").slice(0, 10);
+  const code = (id) => createHmac("sha256", env.RESEARCH_EXPORT_SALT).update(id).digest("hex").slice(0, 10);
+  const memberCode = code(member.user.id);
+  const otherCode = code(other.user.id);
   check("下載 CSV（附檔名）", res.status === 200 && (res.headers.get("content-disposition") ?? "").includes(".csv") && (res.headers.get("content-type") ?? "").includes("text/csv"));
   check("預設只含同意研究的使用者", csv.includes(`U${memberCode}`) && !csv.includes(`U${otherCode}`));
   check("不含文章內容、標題、email 與原本的 user id", !csv.includes(SECRET_TEXT) && !csv.includes(SECRET_TITLE) && !csv.includes("@example.com") && !csv.includes(member.user.id));

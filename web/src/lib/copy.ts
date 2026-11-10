@@ -176,7 +176,7 @@ export const copy = {
     inputTokens: "輸入 token",
     outputTokens: "輸出 token",
     unpriced: (models: string) => `${models} 沒有單價（假資料模式），費用以 0 計。`,
-    costNote: "費用依 shared/settings.yaml 的單價估算；使用者刪除的投稿不再計入。實際金額以 Claude Console 為準。",
+    costNote: "token 與費用來自用量紀錄（使用者刪除投稿後仍保留），依 shared/settings.yaml 的單價估算，實際金額以 Claude Console 為準。投稿數與投稿人數只計算目前還在的投稿。",
     budgetTitle: "本月費用",
     budgetLine: (cost: string, budget: string) => `${cost} / 警戒線 ${budget}`,
     budgetWarn: (pct: number) => `已達警戒線的 ${pct}%，接近上限時請留意。`,
@@ -206,5 +206,6 @@ export const copy = {
     exportIntro: "每筆投稿一列（CSV），不含文章內容、標題與 email；使用者以匿名代號表示。",
     exportAll: "也包含沒有同意研究使用的使用者（僅供檢查，不可用於研究）",
     exportButton: "下載 CSV",
+    saltMissing: "還沒有設定匿名代號的密鑰，無法匯出。請在環境變數加上 RESEARCH_EXPORT_SALT 後重新啟動網站。",
   },
 };

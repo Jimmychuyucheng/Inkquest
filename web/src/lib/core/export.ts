@@ -1,6 +1,6 @@
 // 匯出投稿統計（PRD E-6，供使用者研究）。只在伺服器端使用。
 // 每筆投稿一列；不含文章全文、標題與 email。使用者以匿名代號表示。
-import { createHash } from "node:crypto";
+import { createHmac } from "node:crypto";
 import { GROUPS, personas } from "./shared";
 
 export interface ExportJuror {
@@ -48,9 +48,13 @@ export const EXPORT_COLUMNS = [
   "research_consent",
 ];
 
-/** 匿名使用者代號：user id 的 sha256 前 10 碼。同一人每次匯出都一樣，但看不出是誰。 */
-export function anonymousCode(userId: string): string {
-  return `U${createHash("sha256").update(userId).digest("hex").slice(0, 10)}`;
+/**
+ * 匿名使用者代號：以密鑰（RESEARCH_EXPORT_SALT）對 user id 做 HMAC-SHA256，取前 10 碼。
+ * 同一人每次匯出都一樣；沒有密鑰的人即使拿到 user id 也算不出代號，無法反查是誰。
+ */
+export function anonymousCode(userId: string, salt: string): string {
+  if (salt === "") throw new Error("缺少匿名代號密鑰");
+  return `U${createHmac("sha256", salt).update(userId).digest("hex").slice(0, 10)}`;
 }
 
 /** ISO 時間 → 指定時區的「YYYY-MM-DD HH:mm:ss」。 */
@@ -76,13 +80,13 @@ function cell(value: unknown): string {
   return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
 }
 
-export function exportRow(s: ExportSubmission, timeZone: string): string[] {
+export function exportRow(s: ExportSubmission, timeZone: string, salt: string): string[] {
   const scores = new Map(
     s.juror_results.filter((j) => j.status === "ok" && j.score !== null).map((j) => [j.juror_code, j.score]),
   );
   const stats = s.stats ?? {};
   return [
-    anonymousCode(s.user_id),
+    anonymousCode(s.user_id, salt),
     s.genre,
     s.char_count,
     s.modules.join("|"),
@@ -100,7 +104,7 @@ export function exportRow(s: ExportSubmission, timeZone: string): string[] {
 }
 
 /** 產生 CSV 文字。開頭加 BOM，Excel 打開才不會亂碼。 */
-export function buildCsv(rows: ExportSubmission[], timeZone: string): string {
-  const lines = [EXPORT_COLUMNS.map(cell).join(","), ...rows.map((r) => exportRow(r, timeZone).join(","))];
-  return `﻿${lines.join("\r\n")}\r\n`;
+export function buildCsv(rows: ExportSubmission[], timeZone: string, salt: string): string {
+  const lines = [EXPORT_COLUMNS.map(cell).join(","), ...rows.map((r) => exportRow(r, timeZone, salt).join(","))];
+  return `\uFEFF${lines.join("\r\n")}\r\n`;
 }
