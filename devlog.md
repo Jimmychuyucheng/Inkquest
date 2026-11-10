@@ -208,7 +208,7 @@
 
 Haiku 70 次、Sonnet 5 次、注入補測 10 次，合計約 US$0.31。專案累計 96 次呼叫，約 US$0.32。
 
-## 2026-11-10 W1 Web App 骨架（程式完成，等待 Supabase 與 Google 登入設定後實測）
+## 2026-11-10 W1 Web App 骨架
 
 - 做了什麼：
   - `web/`：Next.js 16（App Router）＋ TypeScript ＋ Tailwind。新增套件（已先徵得同意）：`@supabase/ssr`、`yaml`、`vitest`。
@@ -230,11 +230,18 @@ Haiku 70 次、Sonnet 5 次、注入補測 10 次，合計約 US$0.31。專案�
   - AI 在 zsh 寫 `for path in ...`，`path` 是 zsh 的特殊變數（等同 PATH），導致後面的指令全部找不到；改用別的變數名稱後重跑。
   - AI 寫的測試用詩只有 19 字，低於新詩下限 20 字，是測試本身寫錯。
   - AI 第一次建置後才發現 `/submit` 被當成靜態頁（見上）。
+  - AI 更新 devlog 時用腳本取代文字，定位字串抓到檔案前面的另一段，結果把新段落插進每個字元之間，devlog 膨脹成 15MB 並被 commit（未推送）。下一步編輯時才發現，已撤回該 commit、從前一版還原後重寫。
 - 測試方式與結果：
   - `cd web && npm test`：65 項通過（核心邏輯、JSON 驗證、額度判斷、與 Python 的一致性）。
   - `cd research && pytest`：112 項通過。
   - `npm run typecheck`、`npm run lint`、`npm run build` 通過。
   - 未設定 Supabase 時啟動正式建置版：首頁 200 並顯示設定提示、`/submit` 與 `/terms` 導回首頁、`/api/quota` 401、`POST /api/submissions` 回「請先登入再投稿。」；瀏覽器端程式碼中找不到 service role 金鑰的變數名稱。
-  - **尚未實測**：Google 登入、條款同意寫入、RLS、資料庫的額度函式（需要 Supabase 專案）；`npm run test:db` 已寫好，設定完成後執行。
+  - 接上真實 Supabase 後：`npm run seed` 寫入 20 位人設與 5 項額度設定；`npm run test:db` 23 項全部通過（沒同意條款不能投、第 4 次被拒、處理中不能再投、失敗不扣次、同時送出 6 次只成立 1 次、使用者不能直接建立投稿或調高自己的額度、看不到別人的投稿與 profile、刪除後資料庫查不到文章）。
+  - Google 實際登入由本人在瀏覽器測試，正常。
+- 設定過程的事件：
+  - 金鑰填錯檔案：Supabase 的三個值除了填進 `web/.env.local`，也被填進了有進版控的 `web/.env.example`（尚未 commit）。AI 檢視 git 差異時發現，確認 `.env.local` 內容相同後把 `.env.example` 還原成空白版本；但差異內容已顯示在 AI 對話中，service role 金鑰因此外流到對話紀錄。
+  - 換金鑰：改用 Supabase 新版金鑰（`sb_publishable_`、`sb_secret_`），並在 Supabase 停用舊版的 anon 與 service_role 金鑰，外流的那一把已失效。換完後 `npm run test:db` 23 項仍全部通過、登入正常。程式與 `.env.example` 的變數名稱隨之改為 `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`、`SUPABASE_SECRET_KEY`；`.env.example` 開頭加上「不要在這裡填值」的提醒。
+  - 教訓：`.env.example` 與 `.env.local` 檔名相近容易填錯；檢視未提交的環境檔差異時，應只看檔名不印內容。
+  - 條款頁的政策連結由一般隱私政策改為 API 商業用途的資料政策（AI 原本填的連結不適用）。
 - API 用量與費用：0 次，US$0。
 - 延到 W2 的項目：送出頻率限制（每分鐘 3 次，需要記錄請求）、把投稿交給背景工作、正式環境偵測到 mock 即拒絕啟動。

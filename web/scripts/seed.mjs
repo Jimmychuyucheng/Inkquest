@@ -8,11 +8,11 @@ import { createClient } from "@supabase/supabase-js";
 import { parse } from "yaml";
 import { loadEnv } from "./env.mjs";
 
-const env = loadEnv(["NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"]);
+const env = loadEnv(["NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_SECRET_KEY"]);
 const sharedDir = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "shared");
 const readYaml = (name) => parse(readFileSync(join(sharedDir, name), "utf8"));
 
-const supabase = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
+const supabase = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SECRET_KEY, {
   auth: { persistSession: false },
 });
 

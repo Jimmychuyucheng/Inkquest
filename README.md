@@ -114,8 +114,8 @@ cd research
    cd web
    cp .env.example .env.local
    ```
-   在 `.env.local` 填入 Supabase → Project Settings → API 的三個值：Project URL、anon（publishable）key、service_role（secret）key。
-   service_role key 可以繞過所有權限檢查，只能放在這個檔案與部署平台的環境變數，不要貼到任何地方。
+   在 `.env.local` 填入 Supabase → Project Settings → API 的三個值：Project URL、publishable key（`sb_publishable_` 開頭）、secret key（`sb_secret_` 開頭）。請用新版金鑰，舊版的 anon／service_role 金鑰建議停用。值只填在 `.env.local`，不要填進 `.env.example`（會進版控）。
+   secret key 可以繞過所有權限檢查，只能放在這個檔案與部署平台的環境變數，不要貼到任何地方。
 5. **安裝與寫入初始資料**：
    ```bash
    npm install

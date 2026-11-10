@@ -20,7 +20,7 @@ export const copy = {
       "如果作品尚未投稿、而且你介意外流，建議不要貼上。",
     ],
     providerPolicy: "Anthropic 的資料使用政策",
-    providerPolicyUrl: "https://www.anthropic.com/legal/privacy",
+    providerPolicyUrl: "https://privacy.claude.com/en/articles/7996868-is-my-data-used-for-model-training",
     agree: "我已閱讀並同意以上說明（必填）",
     research: "同意將我的投稿統計（不含文章內容）用於課程研究（選填）",
     submit: "同意並開始",

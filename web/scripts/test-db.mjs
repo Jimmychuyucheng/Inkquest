@@ -11,9 +11,9 @@
 import { createClient } from "@supabase/supabase-js";
 import { loadEnv } from "./env.mjs";
 
-const env = loadEnv(["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY", "SUPABASE_SERVICE_ROLE_KEY"]);
+const env = loadEnv(["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY", "SUPABASE_SECRET_KEY"]);
 const url = env.NEXT_PUBLIC_SUPABASE_URL;
-const admin = createClient(url, env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
+const admin = createClient(url, env.SUPABASE_SECRET_KEY, { auth: { persistSession: false } });
 
 let failures = 0;
 function check(name, condition, detail = "") {
@@ -29,7 +29,7 @@ async function makeUser(label) {
   const password = `T-${crypto.randomUUID()}`;
   const { data, error } = await admin.auth.admin.createUser({ email, password, email_confirm: true });
   if (error) throw new Error(`建立測試帳號失敗：${error.message}`);
-  const client = createClient(url, env.NEXT_PUBLIC_SUPABASE_ANON_KEY, { auth: { persistSession: false } });
+  const client = createClient(url, env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, { auth: { persistSession: false } });
   const signIn = await client.auth.signInWithPassword({ email, password });
   if (signIn.error) throw new Error(`測試帳號登入失敗：${signIn.error.message}（請確認 Supabase 的 Email 登入方式沒有被關閉）`);
   return { id: data.user.id, client };
