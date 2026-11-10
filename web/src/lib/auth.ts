@@ -55,9 +55,20 @@ export async function requireTermsAccepted(): Promise<CurrentUser> {
   return user;
 }
 
-/** 管理者專用頁面與 API 使用（PRD 第 10 節）。 */
+/** 管理者專用頁面使用（PRD 第 10 節）：不是管理者就導回首頁。 */
 export async function requireAdmin(): Promise<CurrentUser> {
   const user = await requireUser();
   if (user.profile?.role !== "admin") redirect("/");
   return user;
+}
+
+/**
+ * 後台 API 使用：回傳管理者，或回傳應該直接回應的錯誤狀態（401 沒登入、403 不是管理者）。
+ * role 是從資料庫讀的，使用者自己改不了（profiles 沒有開放更新）。
+ */
+export async function checkAdminApi(): Promise<{ user: CurrentUser } | { status: 401 | 403 }> {
+  const user = await getCurrentUser();
+  if (!user) return { status: 401 };
+  if (user.profile?.role !== "admin") return { status: 403 };
+  return { user };
 }

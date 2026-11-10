@@ -25,6 +25,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 <nav className="flex items-center gap-4 text-sm">
                   <Link href="/submit" className="underline-offset-4 hover:underline">{copy.nav.submit}</Link>
                   <Link href="/history" className="underline-offset-4 hover:underline">{copy.nav.history}</Link>
+                  {user.profile?.role === "admin" && (
+                    <Link href="/admin" className="underline-offset-4 hover:underline">{copy.nav.admin}</Link>
+                  )}
                 </nav>
                 {user.avatarUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element

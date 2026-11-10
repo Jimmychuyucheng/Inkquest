@@ -101,7 +101,7 @@ cd research
 ### 第一次設定
 
 1. **建立 Supabase 專案**（supabase.com → New project，區域選 Tokyo 或 Singapore）。
-2. **建立資料表**：Supabase 左側 SQL Editor → 依序貼上 [`web/supabase/migrations/`](web/supabase/migrations/) 裡每個檔案的全部內容並 Run（`0001_init.sql`、`0002_rate_limit.sql`）。之後有新的 migration 檔時，同樣貼上執行一次。
+2. **建立資料表**：Supabase 左側 SQL Editor → 依序貼上 [`web/supabase/migrations/`](web/supabase/migrations/) 裡每個檔案的全部內容並 Run（`0001_init.sql` 到 `0004_admin_usage.sql`）。之後有新的 migration 檔時，同樣貼上執行一次。
 3. **設定 Google 登入**：
    1. Google Cloud Console → 建立專案 → APIs & Services → OAuth consent screen：類型選 External，填應用程式名稱與你的 email；測試階段把要登入的 Google 帳號加進 Test users（或直接按 Publish app）。
    2. Credentials → Create Credentials → OAuth client ID → Web application。
@@ -121,10 +121,7 @@ cd research
    npm install
    npm run seed        # 把 20 位人設與額度初始值寫進資料庫
    ```
-6. **把自己設為管理者**：先用 Google 登入網站一次，再到 Supabase SQL Editor 執行（換成你的 email）：
-   ```sql
-   update public.profiles set role = 'admin' where email = '你的 email';
-   ```
+6. **把自己設為管理者**：在 `.env.local` 填 `ADMIN_EMAILS=你的 email`（多個用逗號分隔），先用這個 Google 帳號登入網站一次，再執行一次 `npm run seed`。之後右上角會出現「後台」（`/admin`）。
 
 ### 日常指令（在 `web/` 內）
 
@@ -134,6 +131,7 @@ npm test            # 單元測試（不需要資料庫、不呼叫 AI）
 npm run test:db     # 用真實的 Supabase 測試額度、資料權限與開庭結果的寫入（會建立並刪除測試帳號，不呼叫 AI）
 npm run test:e2e    # 端對端：經由背景工作跑完一次開庭（需先啟動網站與 Inngest 開發伺服器，不呼叫 AI）
 npm run test:pages  # 頁面測試：以測試帳號登入、投稿，檢查結果頁、補勾模組、歷史紀錄與刪除（同樣需先啟動兩個伺服器，不呼叫 AI）
+npm run test:admin  # 後台測試：權限、用量、額度調整立即生效、月預算暫停收件、匯出 CSV（需先啟動網站；會暫時改 settings、結束時改回，不呼叫 AI）
 npm run typecheck   # 型別檢查
 npm run lint
 npm run build       # 正式建置
@@ -158,3 +156,11 @@ npx inngest-cli@latest dev -u http://localhost:3000/api/inngest
 
 人設、prompt、設定都在根目錄的 `shared/`；`npm run dev`、`build`、`test` 會自動把它們同步到 `web/src/generated/`。
 改了 `shared/personas.yaml` 之後，再執行一次 `npm run seed` 更新資料庫。
+
+### 後台（`/admin`，只有管理者）
+
+- **用量總覽**：今日／本月的投稿數、投稿人數、各角色的 token 與估算費用（單價在 `shared/settings.yaml` 的 `pricing`）。
+- **月費用警戒線**：本月估算費用達 `monthly_budget_usd` 的 80%（`budget_warn_ratio`）時後台警示；達 100% 時網站自動暫停收件，下個月 1 日恢復。要提早恢復，在 SQL Editor 調高：
+  `update public.settings set value = '20' where key = 'monthly_budget_usd';`
+- **額度設定**：全站每人每日次數、全站每日上限、個別使用者額度，修改後立即生效。
+- **匯出投稿統計**：CSV，每筆投稿一列，不含文章、標題與 email；使用者以 user id 的 sha256 前 10 碼表示（`U` 開頭）。預設只含同意研究使用的使用者。

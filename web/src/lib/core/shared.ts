@@ -75,6 +75,7 @@ export interface Settings {
     stale_minutes: number;
     rate_limit_per_minute: number;
     monthly_budget_usd: number;
+    budget_warn_ratio: number;
     modules: string[];
     default_modules: string[];
   };

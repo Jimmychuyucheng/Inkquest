@@ -53,3 +53,25 @@ if (settingsError) {
   process.exit(1);
 }
 console.log(`已寫入額度初始值（已存在的項目不會被覆蓋）：${Object.keys(defaults).join("、")}`);
+
+// 管理者：ADMIN_EMAILS 列出的帳號設為 role = admin（只會升級，不會把別人降級）
+const adminEmails = (process.env.ADMIN_EMAILS ?? "")
+  .split(",")
+  .map((e) => e.trim().toLowerCase())
+  .filter(Boolean);
+if (adminEmails.length === 0) {
+  console.log("沒有設定 ADMIN_EMAILS，略過管理者設定。");
+} else {
+  for (const email of adminEmails) {
+    const { data, error } = await supabase.from("profiles").update({ role: "admin" }).ilike("email", email.replace(/[\\%_]/g, (c) => `\\${c}`)).select("id");
+    if (error) {
+      console.error("設定管理者失敗：", error.message);
+      process.exit(1);
+    }
+    if (!data || data.length === 0) {
+      console.log(`找不到 ${email} 的帳號：請先用這個 Google 帳號登入網站一次，再重新執行 npm run seed。`);
+    } else {
+      console.log(`已將 ${email} 設為管理者`);
+    }
+  }
+}

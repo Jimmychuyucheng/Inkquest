@@ -149,8 +149,9 @@ web:
   stale_minutes: 10
   # 同一帳號每分鐘最多幾次送出請求
   rate_limit_per_minute: 3
-  # 月費用警戒線（美元）
+  # 月費用警戒線（美元）：達 budget_warn_ratio 時後台警示，達 100% 自動暫停投稿（PRD 第 10 節）
   monthly_budget_usd: 12
+  budget_warn_ratio: 0.8
   # 回饋模組（B-5）；第一個是預設勾選
   modules: [verdict, jurors, scores, advice]
   default_modules: [verdict]

@@ -106,6 +106,7 @@ class WebConfig(_Strict):
     stale_minutes: int = Field(gt=0)
     rate_limit_per_minute: int = Field(gt=0)
     monthly_budget_usd: float = Field(ge=0)
+    budget_warn_ratio: float = Field(gt=0, le=1)
     modules: list[str] = Field(min_length=1)
     default_modules: list[str] = Field(min_length=1)
 

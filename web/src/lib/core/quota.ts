@@ -51,7 +51,8 @@ export type RejectReason =
   | "in_progress"
   | "quota_exceeded"
   | "global_full"
-  | "rate_limited";
+  | "rate_limited"
+  | "budget_paused";
 
 /** 拒絕原因 → 白話訊息（說明下一步，不顯示技術錯誤碼）。 */
 export function rejectMessage(reason: string): string {
@@ -66,6 +67,8 @@ export function rejectMessage(reason: string): string {
       return "今日法院已滿庭，請明天再來。";
     case "rate_limited":
       return "送出得太頻繁了，請等一分鐘後再試。";
+    case "budget_paused":
+      return "本月的 AI 費用已達上限，法院暫停收件，下個月 1 日恢復。";
     default:
       return "目前無法送出，請稍後再試一次。";
   }

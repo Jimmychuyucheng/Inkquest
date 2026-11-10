@@ -2,6 +2,7 @@
 // 額度、字數、登入身分全部在這裡（伺服器端）檢查，不依賴前端。
 // 陪審員與法官在背景工作中執行（src/inngest/functions.ts）。
 import { NextResponse, type NextRequest } from "next/server";
+import { getBudgetStatus } from "@/lib/admin-server";
 import { getCurrentUser } from "@/lib/auth";
 import { copy } from "@/lib/copy";
 import { rejectMessage, validateSubmission } from "@/lib/core/quota";
@@ -15,6 +16,7 @@ const REJECT_STATUS: Record<string, number> = {
   quota_exceeded: 429,
   global_full: 429,
   rate_limited: 429,
+  budget_paused: 503,
 };
 
 export async function POST(request: NextRequest) {
@@ -28,7 +30,18 @@ export async function POST(request: NextRequest) {
   if (!validated.ok) return NextResponse.json({ message: validated.message }, { status: 400 });
   const { genre, title, content, modules, charCount } = validated.value;
 
-  // 3. 額度檢查與建立投稿：在資料庫的同一個交易內完成
+  // 3. 月費用警戒線（PRD 第 10 節）：本月估算費用達上限就暫停收件
+  try {
+    const budget = await getBudgetStatus();
+    if (budget.level === "paused") {
+      return NextResponse.json({ message: rejectMessage("budget_paused") }, { status: REJECT_STATUS.budget_paused });
+    }
+  } catch {
+    // 查不到費用時不放行：寧可暫停，也不要在不知道花了多少的情況下繼續呼叫模型
+    return NextResponse.json({ message: copy.errors.generic }, { status: 500 });
+  }
+
+  // 4. 額度檢查與建立投稿：在資料庫的同一個交易內完成
   const admin = createAdminClient();
   const { data, error } = await admin.rpc("create_submission", {
     p_user_id: user.id,
@@ -49,7 +62,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // 4. 交給背景工作佇列；陪審員與法官在背景執行，這個請求立刻回應
+  // 5. 交給背景工作佇列；陪審員與法官在背景執行，這個請求立刻回應
   try {
     await inngest.send({ name: COURT_EVENT, data: { submissionId: data.id } });
   } catch (sendError) {
