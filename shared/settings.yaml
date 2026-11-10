@@ -63,3 +63,58 @@ mock:
   min_delay_seconds: 1
   max_delay_seconds: 3
   failure_rate: 0.05
+
+# ---- 以下為完整流程（抽陪審員 → 計票 → 法官）的設定 ----
+
+# 陪審團抽選（PRD 第 4 節）：20 選 10，依組別分層
+jury:
+  size_by_group:
+    文學專業: 3
+    一般讀者: 3
+    跨界視角: 4
+  # 成功評閱的陪審員少於這個數字，整次失敗（PRD 第 2 節異常流程）
+  min_success: 8
+  # 同時呼叫的陪審員數上限
+  concurrency: 10
+
+# 法官呼叫設定
+judge:
+  # PRD 的「法官輸出上限 1,500 tokens」是預期長度；法官保留思考，所以留更多餘裕。
+  max_tokens: 4000
+  thinking: adaptive
+  effort:
+  timeout_seconds: 60
+  max_retries: 2
+
+# 法官輸出的字數規定（PRD 第 5 節）；超出 20% 以內可接受
+judge_output:
+  headline_max: 25
+  verdict_min: 250
+  verdict_max: 400
+  minority_min: 100
+  minority_max: 200
+  disagreement_max: 60
+  # 判決書至少要引用幾位陪審員（且須涵蓋不同組別）
+  min_cited_jurors: 3
+  length_tolerance: 0.2
+
+# 計分與得獎潛力（PRD 第 6 節）
+stats:
+  # 爭議程度：標準差 >= high_std，或支持比例在 split_low～split_high 之間為「高」；
+  # 標準差 >= mid_std 為「中」；其餘「低」
+  controversy_high_std: 2.0
+  controversy_mid_std: 1.2
+  controversy_split_low: 0.35
+  controversy_split_high: 0.65
+  # 最常被提到的面向取前幾名
+  top_tags: 3
+  # 得獎潛力的文字說明：支持比例 >= min 時使用，由高到低比對
+  potential_labels:
+    - min: 0.75
+      label: 陪審團高度肯定
+    - min: 0.50
+      label: 多數陪審員支持
+    - min: 0.25
+      label: 意見分歧，少數支持
+    - min: 0.0
+      label: 陪審團多有保留

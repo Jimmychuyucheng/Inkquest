@@ -169,6 +169,40 @@ def mock_juror_output(meta: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def mock_judge_output(meta: dict[str, Any]) -> dict[str, Any]:
+    """依本次陪審團名單產生假判決：每個組別各引用一位，符合 PRD 第 5 節 schema。"""
+    jury = list(meta.get("jury", []))
+    first_by_group: dict[str, dict[str, Any]] = {}
+    for member in jury:
+        first_by_group.setdefault(member["group"], member)
+    cited = list(first_by_group.values())
+    citations = "；".join(
+        f"{m['code']} {m['occupation']}（{m['group']}）認為作品的開頭具體、結尾收得稍快" for m in cited
+    )
+    return {
+        "headline": "（假資料）有亮點的作品，結尾可再打磨。",
+        "verdict": (
+            "（假資料）本庭綜合陪審團的意見後認為，這篇作品的場景描寫具體，能把讀者帶進現場，"
+            "多數陪審員對開頭與中段的細節給予肯定。" + citations + "。"
+            "各組的看法大致一致：優點集中在觀察的細緻與敘述的節制，缺點則集中在結尾的處理。"
+            "幾位陪審員都提到，作品最想說的那件事在最後被輕輕帶過，力道因此弱了一些；"
+            "也有人認為這種收法保留了餘地，不算缺點。綜合來看，這是一篇完成度不錯、"
+            "但仍有修改空間的投稿，建議作者把結尾再往前推一步，讓前面累積的細節有地方落下。"
+            "以上判斷完全依據陪審團提出的意見與程式計算的統計，本庭沒有另外加入新的評價。"
+        ),
+        "minority_opinion": (
+            "（假資料）少數陪審員認為結尾收得快並不是缺點，反而讓作品保持節制，"
+            "不把話說滿；如果照多數意見把結尾寫得更完整，可能會失去原本安靜的力量。"
+            "這個看法值得作者在修改時一併考慮，不必急著把每個地方都交代清楚。"
+        ),
+        "minority_jurors": [cited[-1]["code"]] if cited else [],
+        "biggest_disagreement": "（假資料）結尾收得快，是缺點還是節制。",
+        "top_strengths": ["開頭的場景描寫具體"],
+        "top_weaknesses": ["結尾收得太快"],
+        "author_wellbeing_flag": False,
+    }
+
+
 class MockProvider:
     """假資料模式。可指定延遲與失敗率；也可用 script 指定每次呼叫的回應，方便測試重試。
 
@@ -184,10 +218,13 @@ class MockProvider:
         *,
         script: list[Any] | None = None,
         seed: int | None = None,
+        fail_jurors: set[str] | None = None,
     ) -> None:
         self._config = config or MockConfig(min_delay_seconds=0, max_delay_seconds=0, failure_rate=0)
         self._script = list(script or [])
         self._random = random.Random(seed)
+        # 指定哪些陪審員一律失敗（測試「部分陪審員失敗」用）
+        self._fail_jurors = set(fail_jurors or ())
         self.requests: list[LLMRequest] = []
 
     async def complete(self, request: LLMRequest) -> LLMResponse:
@@ -195,6 +232,9 @@ class MockProvider:
         delay = self._random.uniform(self._config.min_delay_seconds, self._config.max_delay_seconds)
         if delay > 0:
             await asyncio.sleep(delay)
+
+        if request.meta.get("juror_code") in self._fail_jurors:
+            raise LLMCallError("（假資料模式）指定這位陪審員失敗", retryable=False)
 
         if self._script:
             item = self._script.pop(0)
@@ -204,7 +244,8 @@ class MockProvider:
         else:
             if self._random.random() < self._config.failure_rate:
                 raise LLMCallError("（假資料模式）模擬的偶發失敗")
-            text = json.dumps(mock_juror_output(request.meta), ensure_ascii=False)
+            make = mock_judge_output if request.meta.get("role") == "judge" else mock_juror_output
+            text = json.dumps(make(request.meta), ensure_ascii=False)
 
         return LLMResponse(
             text=text,

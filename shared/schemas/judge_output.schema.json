@@ -1,0 +1,75 @@
+{
+  "additionalProperties": false,
+  "description": "法官輸出（PRD 第 5 節）。",
+  "properties": {
+    "headline": {
+      "description": "一句話判決",
+      "minLength": 1,
+      "title": "Headline",
+      "type": "string"
+    },
+    "verdict": {
+      "description": "判決書，須引用陪審員並標明編號",
+      "minLength": 1,
+      "title": "Verdict",
+      "type": "string"
+    },
+    "minority_opinion": {
+      "description": "少數意見書",
+      "minLength": 1,
+      "title": "Minority Opinion",
+      "type": "string"
+    },
+    "minority_jurors": {
+      "description": "持少數意見的陪審員編號；全體一致時為空陣列",
+      "items": {
+        "pattern": "^J\\d{2}$",
+        "type": "string"
+      },
+      "title": "Minority Jurors",
+      "type": "array"
+    },
+    "biggest_disagreement": {
+      "description": "陪審團最大的分歧點",
+      "minLength": 1,
+      "title": "Biggest Disagreement",
+      "type": "string"
+    },
+    "top_strengths": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "maxItems": 3,
+      "minItems": 1,
+      "title": "Top Strengths",
+      "type": "array"
+    },
+    "top_weaknesses": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "maxItems": 3,
+      "minItems": 1,
+      "title": "Top Weaknesses",
+      "type": "array"
+    },
+    "author_wellbeing_flag": {
+      "title": "Author Wellbeing Flag",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "headline",
+    "verdict",
+    "minority_opinion",
+    "minority_jurors",
+    "biggest_disagreement",
+    "top_strengths",
+    "top_weaknesses",
+    "author_wellbeing_flag"
+  ],
+  "title": "JudgeOutput",
+  "type": "object"
+}

@@ -5,3 +5,6 @@
 node_modules/
 __pycache__/
 .DS_Store
+
+# 研究腳本的執行結果（內含文章全文，不進版控）
+research/results/

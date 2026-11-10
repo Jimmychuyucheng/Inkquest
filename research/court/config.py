@@ -35,6 +35,41 @@ class JurorOutputLimits(_Strict):
     length_tolerance: float = Field(ge=0)
 
 
+class JudgeOutputLimits(_Strict):
+    headline_max: int = Field(gt=0)
+    verdict_min: int = Field(gt=0)
+    verdict_max: int = Field(gt=0)
+    minority_min: int = Field(gt=0)
+    minority_max: int = Field(gt=0)
+    disagreement_max: int = Field(gt=0)
+    min_cited_jurors: int = Field(ge=0)
+    length_tolerance: float = Field(ge=0)
+
+
+class JuryConfig(_Strict):
+    size_by_group: dict[str, int]
+    min_success: int = Field(ge=1)
+    concurrency: int = Field(ge=1)
+
+    @property
+    def size(self) -> int:
+        return sum(self.size_by_group.values())
+
+
+class PotentialLabel(_Strict):
+    min: float
+    label: str
+
+
+class StatsConfig(_Strict):
+    controversy_high_std: float
+    controversy_mid_std: float
+    controversy_split_low: float
+    controversy_split_high: float
+    top_tags: int = Field(ge=1)
+    potential_labels: list[PotentialLabel] = Field(min_length=1)
+
+
 class GenreRule(_Strict):
     min_chars: int = Field(ge=0)
     max_chars: int = Field(gt=0)
@@ -58,6 +93,10 @@ class Settings(_Strict):
     models: dict[str, str]
     juror: RoleConfig
     juror_output: JurorOutputLimits
+    jury: JuryConfig
+    judge: RoleConfig
+    judge_output: JudgeOutputLimits
+    stats: StatsConfig
     genres: dict[str, GenreRule]
     pricing: dict[str, Price]
     mock: MockConfig
