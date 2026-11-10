@@ -147,16 +147,26 @@ try {
 
   console.log("用量紀錄（只能新增，刪除投稿後保留）");
   const doomed = await insertDone(member.user.id);
-  await admin.from("verdicts").insert({ submission_id: doomed, output: {}, model: "mock", input_tokens: 0, output_tokens: 0 });
+  const verdictInsert = await admin.from("verdicts").insert({ submission_id: doomed, output: {}, model: "mock", input_tokens: 0, output_tokens: 0 });
+  check("寫入判決成功（用量紀錄的觸發器不會擋住正常寫入）", verdictInsert.error === null, verdictInsert.error?.message);
+  const adviceInsert = await admin.from("advice").insert({ submission_id: doomed, output: {}, model: "mock", input_tokens: 0, output_tokens: 0 });
+  check("寫入修改建議成功", adviceInsert.error === null, adviceInsert.error?.message);
   let log = await admin.from("usage_log").select("id, source, juror_code, model").eq("submission_id", doomed);
-  check("寫入陪審員結果與判決時自動記錄用量", (log.data ?? []).length === 3 && log.data.filter((r) => r.source === "juror").length === 2, JSON.stringify(log.data));
+  check(
+    "寫入陪審員結果、判決、修改建議時自動記錄用量",
+    (log.data ?? []).length === 4 &&
+      log.data.filter((r) => r.source === "juror" && r.juror_code).length === 2 &&
+      log.data.some((r) => r.source === "judge" && r.juror_code === null) &&
+      log.data.some((r) => r.source === "advice" && r.juror_code === null),
+    JSON.stringify(log.data),
+  );
   check("用量紀錄不含文章內容、標題、email 與 user id", !JSON.stringify(log.data).match(/晾衣竿|秘密標題|@example\.com/) && !JSON.stringify(log.data).includes(member.user.id));
   await admin.from("juror_results").update({ input_tokens: 0, output_tokens: 0 }).eq("submission_id", doomed).eq("juror_code", "J01");
   log = await admin.from("usage_log").select("id").eq("submission_id", doomed);
-  check("結果重寫（背景工作重跑）時再記一筆", (log.data ?? []).length === 4, `共 ${(log.data ?? []).length} 筆`);
+  check("結果重寫（背景工作重跑）時再記一筆", (log.data ?? []).length === 5, `共 ${(log.data ?? []).length} 筆`);
   const removed = await member.client.from("submissions").delete().eq("id", doomed);
   log = await admin.from("usage_log").select("id").eq("submission_id", doomed);
-  check("使用者刪除投稿後，用量紀錄仍然保留", !removed.error && (log.data ?? []).length === 4, `共 ${(log.data ?? []).length} 筆`);
+  check("使用者刪除投稿後，用量紀錄仍然保留", !removed.error && (log.data ?? []).length === 5, `共 ${(log.data ?? []).length} 筆`);
   const firstId = log.data?.[0]?.id;
   const upd = await admin.from("usage_log").update({ input_tokens: 0 }).eq("id", firstId).select();
   check("連伺服器也不能修改用量紀錄", upd.error !== null);
@@ -165,7 +175,7 @@ try {
   const ins = await admin.from("usage_log").insert({ submission_id: doomed, source: "juror", model: "fake", input_tokens: 1, output_tokens: 1 }).select();
   check("程式不能自己寫入用量紀錄（只能經由結果表自動記錄）", ins.error !== null);
   log = await admin.from("usage_log").select("id").eq("submission_id", doomed);
-  check("以上操作之後紀錄數不變", (log.data ?? []).length === 4, `共 ${(log.data ?? []).length} 筆`);
+  check("以上操作之後紀錄數不變", (log.data ?? []).length === 5, `共 ${(log.data ?? []).length} 筆`);
 
   console.log("額度調整");
   res = await boss.request("PATCH", "/api/admin/settings", { daily_quota_per_user: -1 });

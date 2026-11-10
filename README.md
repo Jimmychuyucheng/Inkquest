@@ -101,7 +101,7 @@ cd research
 ### 第一次設定
 
 1. **建立 Supabase 專案**（supabase.com → New project，區域選 Tokyo 或 Singapore）。
-2. **建立資料表**：Supabase 左側 SQL Editor → 依序貼上 [`web/supabase/migrations/`](web/supabase/migrations/) 裡每個檔案的全部內容並 Run（`0001_init.sql` 到 `0004_admin_usage.sql`）。之後有新的 migration 檔時，同樣貼上執行一次。
+2. **建立資料表**：Supabase 左側 SQL Editor → 依序貼上 [`web/supabase/migrations/`](web/supabase/migrations/) 裡每個檔案的全部內容並 Run（`0001_init.sql` 到 `0006_fix_log_usage.sql`）。之後有新的 migration 檔時，同樣貼上執行一次。
 3. **設定 Google 登入**：
    1. Google Cloud Console → 建立專案 → APIs & Services → OAuth consent screen：類型選 External，填應用程式名稱與你的 email；測試階段把要登入的 Google 帳號加進 Test users（或直接按 Publish app）。
    2. Credentials → Create Credentials → OAuth client ID → Web application。
