@@ -1,6 +1,6 @@
 "use client";
 // 開庭的即時進度（PRD C-3）：背景工作把進度寫進資料庫，這裡透過 Supabase Realtime 接收。
-// Realtime 連不上時，改為每 2 秒向資料庫查一次，確保畫面仍會更新。
+// 另外固定每 2 秒向資料庫查一次當作保險：即使 Realtime 沒有送來事件，畫面仍會更新。
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { copy } from "@/lib/copy";
@@ -22,7 +22,6 @@ export function CourtProgress({ id, initial }: { id: string; initial: Progress }
   const t = copy.court;
   const router = useRouter();
   const [progress, setProgress] = useState(initial);
-  const [live, setLive] = useState(false);
   const finished = FINAL.includes(progress.status);
   const wasFinished = useRef(FINAL.includes(initial.status));
 
@@ -45,26 +44,34 @@ export function CourtProgress({ id, initial }: { id: string; initial: Progress }
   useEffect(() => {
     if (finished) return;
     const supabase = createClient();
-    const channel = supabase
-      .channel(`court-${id}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "submissions", filter: `id=eq.${id}` }, refetch)
-      .on("postgres_changes", { event: "*", schema: "public", table: "juror_results", filter: `submission_id=eq.${id}` }, refetch)
-      .subscribe((state) => {
-        setLive(state === "SUBSCRIBED");
-        // 訂閱成功的當下補查一次，避免漏掉連線前發生的變化
-        if (state === "SUBSCRIBED") void refetch();
-      });
+    let cancelled = false;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    void (async () => {
+      // 先讓 Realtime 帶上使用者的登入身分再訂閱；
+      // 否則連線會以未登入的身分建立，RLS 會把所有事件擋掉，畫面就不會動
+      await supabase.realtime.setAuth();
+      if (cancelled) return;
+      channel = supabase
+        .channel(`court-${id}`)
+        .on("postgres_changes", { event: "*", schema: "public", table: "submissions", filter: `id=eq.${id}` }, refetch)
+        .on("postgres_changes", { event: "*", schema: "public", table: "juror_results", filter: `submission_id=eq.${id}` }, refetch)
+        .subscribe((state) => {
+          // 訂閱成功的當下補查一次，避免漏掉連線前發生的變化
+          if (state === "SUBSCRIBED") void refetch();
+        });
+    })();
     return () => {
-      void supabase.removeChannel(channel);
+      cancelled = true;
+      if (channel) void supabase.removeChannel(channel);
     };
   }, [id, finished, refetch]);
 
-  // 備援：Realtime 沒連上時每 2 秒查一次
+  // 保險：開庭期間固定每 2 秒查一次（PRD C-3：至少每 2 秒更新）
   useEffect(() => {
-    if (finished || live) return;
+    if (finished) return;
     const timer = setInterval(() => void refetch(), POLL_MS);
     return () => clearInterval(timer);
-  }, [finished, live, refetch]);
+  }, [finished, refetch]);
 
   // 結束時請伺服器重新產生頁面，帶出判決
   useEffect(() => {
