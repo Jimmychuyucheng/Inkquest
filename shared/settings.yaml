@@ -42,7 +42,7 @@ genres:
     description: 現代詩，分行與斷句是表現的一部分
   小品文:
     min_chars: 100
-    max_chars: 1000
+    max_chars: 1200
     description: 篇幅短小、以一個片刻或意念為核心的散文
   極短篇:
     min_chars: 100

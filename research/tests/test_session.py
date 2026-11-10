@@ -266,9 +266,10 @@ def test_first_line_can_be_used_as_title(settings, tmp_path):
 
     assert split_title_line("\n標題\n\n第一段\n\n第二段\n") == ("標題", "\n第一段\n\n第二段".strip("\n"))
     path = tmp_path / "a.txt"
-    path.write_text("我的標題\n" + "字" * 1000, encoding="utf-8")
-    # 不拆標題時 1004 字，超過小品文上限；拆掉標題後剛好 1000 字
-    with pytest.raises(CliError, match="最多 1000 字"):
+    limit = settings.genres["小品文"].max_chars
+    path.write_text("我的標題\n" + "字" * limit, encoding="utf-8")
+    # 不拆標題時超過小品文上限；拆掉標題後剛好等於上限
+    with pytest.raises(CliError, match=f"最多 {limit} 字"):
         read_titled_article(path, "小品文", settings, first_line_is_title=False)
     title, content = read_titled_article(path, "小品文", settings, first_line_is_title=True)
-    assert title == "我的標題" and content == "字" * 1000
+    assert title == "我的標題" and content == "字" * limit
