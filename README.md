@@ -4,7 +4,7 @@ AI 文學獎法院：從 20 位不同職業人設的 AI 陪審員中抽出 10 �
 
 - 規格：[docs/PRD.md](docs/PRD.md)、[docs/research-plan.md](docs/research-plan.md)
 - 開發紀錄：[devlog.md](devlog.md)
-- 目前進度：R1 完成；W0 程式完成，等 5 篇測試文後執行比較
+- 目前進度：R1、W0 完成（法官維持 Haiku 5.5）；下一步 W1 Web App 骨架
 
 ## 資料夾
 

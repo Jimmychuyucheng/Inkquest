@@ -24,7 +24,7 @@ juror:
 
 # 陪審員輸出的字數規定（PRD 第 5 節）；超出 20% 以內可接受
 juror_output:
-  one_line_max: 30
+  one_line_max: 40
   comment_min: 120
   comment_max: 250
   length_tolerance: 0.2
@@ -96,16 +96,19 @@ judge_output:
   disagreement_max: 60
   # 判決書至少要引用幾位陪審員（且須涵蓋不同組別）
   min_cited_jurors: 3
+  # 法官不可使用的字眼（不預測比賽結果）；出現就視為不合格並重試
+  banned_words: [入選, 得獎, 決審, 獲獎]
   length_tolerance: 0.2
 
 # 計分與得獎潛力（PRD 第 6 節）
 stats:
-  # 爭議程度：標準差 >= high_std，或支持比例在 split_low～split_high 之間為「高」；
+  # 爭議程度（2026-11-10 依 W0 實測調整：陪審員分數的標準差只有 0～0.5，原門檻幾乎達不到）
+  # 主要看支持比例：在 split_low～split_high 之間為「高」；標準差 >= high_std 也算「高」；
   # 標準差 >= mid_std 為「中」；其餘「低」
   controversy_high_std: 2.0
-  controversy_mid_std: 1.2
-  controversy_split_low: 0.35
-  controversy_split_high: 0.65
+  controversy_mid_std: 0.8
+  controversy_split_low: 0.30
+  controversy_split_high: 0.70
   # 最常被提到的面向取前幾名
   top_tags: 3
   # 得獎潛力的文字說明：支持比例 >= min 時使用，由高到低比對

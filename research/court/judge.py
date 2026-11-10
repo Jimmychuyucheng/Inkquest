@@ -12,7 +12,13 @@ from .juror import JurorResult, OutputInvalid
 from .llm import LLMCallError, LLMProvider, LLMRequest
 from .personas import Persona
 from .prompts import UNTITLED, load_template, neutralize_article_tags, render
-from .schemas import JudgeOutput, check_judge_output, judge_json_schema, to_api_schema
+from .schemas import (
+    JudgeOutput,
+    check_judge_output,
+    describe_validation_error,
+    judge_json_schema,
+    to_api_schema,
+)
 from .stats import SessionStats
 
 
@@ -58,7 +64,11 @@ def build_judge_prompts(
     limits = settings.judge_output
     system = render(
         load_template("judge_system.txt"),
-        {"genre": genre, "min_cited_jurors": str(limits.min_cited_jurors)},
+        {
+            "genre": genre,
+            "min_cited_jurors": str(limits.min_cited_jurors),
+            "banned_words": "、".join(f"「{word}」" for word in limits.banned_words),
+        },
     )
     user = render(
         load_template("judge_user.txt"),
@@ -93,11 +103,7 @@ def parse_judge_output(text: str, settings: Settings, jury_groups: dict[str, str
     try:
         output = JudgeOutput.model_validate(data)
     except ValidationError as exc:
-        details = "；".join(
-            f"{'.'.join(str(part) for part in err['loc']) or '(整體)'}：{err['msg']}"
-            for err in exc.errors()
-        )
-        raise OutputInvalid(f"JSON 格式不符：{details}") from exc
+        raise OutputInvalid(f"JSON 格式不符：{describe_validation_error(exc)}") from exc
     problems = check_judge_output(output, settings.judge_output, jury_groups)
     if problems:
         raise OutputInvalid("；".join(problems))
@@ -169,7 +175,10 @@ async def run_judge(
         except OutputInvalid as exc:
             result.error = str(exc)
             result.attempt_errors.append(str(exc))
-            retry_note = f"\n\n注意：你上一次的輸出不合格（{exc}）。請修正後重新輸出完整的 JSON。"
+            retry_note = (
+                f"\n\n注意：你上一次的輸出被退回，原因是：{exc}。"
+                "請針對這個原因修正，其他內容可以保留，然後重新輸出完整的 JSON。"
+            )
             continue
 
         result.status = "ok"

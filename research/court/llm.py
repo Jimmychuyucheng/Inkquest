@@ -153,6 +153,7 @@ def mock_juror_output(meta: dict[str, Any]) -> dict[str, Any]:
     tags = ["意象", "結構", "節奏", "人物", "情感", "題材",
             "語言", "開頭", "結尾", "真實感", "可讀性", "原創性"]
     return {
+        "characters_in_text": ["我"],
         "score": score,
         "would_support_award": score >= 7,
         "one_line": f"（假資料）{name}：有亮點，也有可再磨之處。",

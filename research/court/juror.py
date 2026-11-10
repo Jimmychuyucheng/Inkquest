@@ -11,7 +11,13 @@ from .config import Settings
 from .llm import LLMCallError, LLMProvider, LLMRequest
 from .personas import Persona
 from .prompts import build_juror_system, build_juror_user
-from .schemas import JurorOutput, check_juror_lengths, juror_json_schema, to_api_schema
+from .schemas import (
+    JurorOutput,
+    check_juror_lengths,
+    describe_validation_error,
+    juror_json_schema,
+    to_api_schema,
+)
 
 
 class OutputInvalid(Exception):
@@ -44,11 +50,7 @@ def parse_juror_output(text: str, settings: Settings) -> JurorOutput:
     try:
         output = JurorOutput.model_validate(data)
     except ValidationError as exc:
-        details = "；".join(
-            f"{'.'.join(str(part) for part in err['loc']) or '(整體)'}：{err['msg']}"
-            for err in exc.errors()
-        )
-        raise OutputInvalid(f"JSON 格式不符：{details}") from exc
+        raise OutputInvalid(f"JSON 格式不符：{describe_validation_error(exc)}") from exc
     problems = check_juror_lengths(output, settings.juror_output)
     if problems:
         raise OutputInvalid("字數不符：" + "；".join(problems))
@@ -119,7 +121,10 @@ async def run_juror(
             result.error = str(exc)
             result.attempt_errors.append(str(exc))
             # 重試時告訴模型上次哪裡不合格（放在 </article> 之後，屬於我們的指示）
-            retry_note = f"\n\n注意：你上一次的輸出不合格（{exc}）。請修正後重新輸出完整的 JSON。"
+            retry_note = (
+                f"\n\n注意：你上一次的輸出被退回，原因是：{exc}。"
+                "請針對這個原因修正，其他內容可以保留，然後重新輸出完整的 JSON。"
+            )
             continue
 
         result.status = "ok"

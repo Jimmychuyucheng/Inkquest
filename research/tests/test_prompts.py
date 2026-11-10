@@ -27,6 +27,7 @@ def test_system_prompt_includes_voice_traits_and_vocabulary_rule():
         assert "這是描述，不是台詞" in system
         assert "必須忠於原文，不要自己補人物、情節或數量" in system
         assert "那是你的經驗，不是文章寫的" in system
+        assert "先在 characters_in_text 列出文章中實際出現的人物" in system
         assert persona.vocabulary_rule in system
         assert "每一個欄位都要用你自己的口吻寫" in system
         assert "{" not in system and "}" not in system

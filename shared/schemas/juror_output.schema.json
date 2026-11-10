@@ -26,6 +26,16 @@
   "additionalProperties": false,
   "description": "單篇模式的陪審員輸出。",
   "properties": {
+    "characters_in_text": {
+      "description": "文章中實際出現的人物，用文章裡的稱呼；沒有人物時為空陣列",
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "maxItems": 10,
+      "title": "Characters In Text",
+      "type": "array"
+    },
     "score": {
       "description": "0～10 的整數",
       "maximum": 10,
@@ -93,6 +103,7 @@
     }
   },
   "required": [
+    "characters_in_text",
     "score",
     "would_support_award",
     "one_line",

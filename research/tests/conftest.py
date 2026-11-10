@@ -32,6 +32,7 @@ def mock_provider() -> MockProvider:
 
 def valid_output() -> dict:
     return {
+        "characters_in_text": ["我", "外婆"],
         "score": 7,
         "would_support_award": True,
         "one_line": "結構紮實，結尾略急。",

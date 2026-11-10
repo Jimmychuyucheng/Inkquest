@@ -63,9 +63,9 @@ def test_invalid_output_then_valid_retries_once(settings):
     assert len(result.attempt_errors) == 1 and "score" in result.attempt_errors[0]
     # 第二次的 prompt 會說明上次哪裡不合格，而且寫在待評區塊之後
     retry_user = provider.requests[1].user
-    assert "上一次的輸出不合格" in retry_user
-    assert retry_user.index("</article>") < retry_user.index("上一次的輸出不合格")
-    assert "上一次的輸出不合格" not in provider.requests[0].user
+    assert "上一次的輸出被退回" in retry_user
+    assert retry_user.index("</article>") < retry_user.index("上一次的輸出被退回")
+    assert "上一次的輸出被退回" not in provider.requests[0].user
 
 
 def test_gives_up_after_two_retries(settings):

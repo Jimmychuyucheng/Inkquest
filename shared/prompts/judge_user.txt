@@ -17,7 +17,7 @@
 請依下列 JSON 格式輸出你的判決。
 
 - headline：一句話判決，{headline_max} 字以內。
-- verdict：判決書，{verdict_min}～{verdict_max} 字，須引用至少 {min_cited_jurors} 位不同組別的陪審員並標明編號。
+- verdict：判決書，{verdict_min}～{verdict_max} 字，依文學專業、一般讀者、跨界視角三個組別整理，須引用至少 {min_cited_jurors} 位不同組別的陪審員並標明編號。
 - minority_opinion：少數意見書，{minority_min}～{minority_max} 字。
 - minority_jurors：持少數意見的陪審員編號陣列，例如 ["J15", "J18"]；全體一致時給空陣列。
 - biggest_disagreement：陪審團最大的分歧點，{disagreement_max} 字以內。

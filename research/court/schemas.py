@@ -12,7 +12,15 @@ import json
 import re
 from typing import Annotated, Any, Literal, get_args
 
-from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt, field_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    StrictBool,
+    StrictInt,
+    ValidationError,
+    field_validator,
+)
 
 from .config import SHARED_DIR, JudgeOutputLimits, JurorOutputLimits
 from .text import count_chars
@@ -40,6 +48,10 @@ class JurorOutput(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
+    # 放在第一個欄位：要模型先盤點文章裡有哪些人物，再開始評論，減少自己補人物或數量的情形
+    characters_in_text: list[Annotated[str, Field(min_length=1)]] = Field(
+        max_length=10, description="文章中實際出現的人物，用文章裡的稱呼；沒有人物時為空陣列"
+    )
     score: StrictInt = Field(ge=0, le=10, description="0～10 的整數")
     would_support_award: StrictBool = Field(description="進入決審時是否支持得獎")
     one_line: str = Field(min_length=1, description="一句話總評")
@@ -64,13 +76,13 @@ def check_juror_lengths(output: JurorOutput, limits: JurorOutputLimits) -> list[
     one_line = count_chars(output.one_line)
     one_line_max = limits.one_line_max * (1 + tol)
     if one_line > one_line_max:
-        problems.append(f"one_line 有 {one_line} 字，超過上限 {limits.one_line_max} 字")
+        problems.append(f"one_line 寫了 {one_line} 字，請縮短到 {limits.one_line_max} 字以內")
 
     comment = count_chars(output.comment)
     if comment < limits.comment_min * (1 - tol):
-        problems.append(f"comment 只有 {comment} 字，少於下限 {limits.comment_min} 字")
+        problems.append(f"comment 只寫了 {comment} 字，請增加到 {limits.comment_min} 字以上")
     if comment > limits.comment_max * (1 + tol):
-        problems.append(f"comment 有 {comment} 字，超過上限 {limits.comment_max} 字")
+        problems.append(f"comment 寫了 {comment} 字，請縮短到 {limits.comment_max} 字以內")
     return problems
 
 
@@ -110,12 +122,12 @@ def check_judge_output(
     def too_long(name: str, text: str, maximum: int) -> None:
         length = count_chars(text)
         if length > maximum * (1 + tol):
-            problems.append(f"{name} 有 {length} 字，超過上限 {maximum} 字")
+            problems.append(f"{name} 寫了 {length} 字，請縮短到 {maximum} 字以內")
 
     def too_short(name: str, text: str, minimum: int) -> None:
         length = count_chars(text)
         if length < minimum * (1 - tol):
-            problems.append(f"{name} 只有 {length} 字，少於下限 {minimum} 字")
+            problems.append(f"{name} 只寫了 {length} 字，請增加到 {minimum} 字以上")
 
     too_long("headline", output.headline, limits.headline_max)
     too_short("verdict", output.verdict, limits.verdict_min)
@@ -140,6 +152,21 @@ def check_judge_output(
         problems.append(
             f"verdict 引用的陪審員只來自 {len(groups_cited)} 個組別，需要涵蓋 {groups_needed} 個組別"
         )
+
+    fields = {
+        "headline": output.headline,
+        "verdict": output.verdict,
+        "minority_opinion": output.minority_opinion,
+        "biggest_disagreement": output.biggest_disagreement,
+        "top_strengths": "\n".join(output.top_strengths),
+        "top_weaknesses": "\n".join(output.top_weaknesses),
+    }
+    for name, text in fields.items():
+        used = [word for word in limits.banned_words if word in text]
+        if used:
+            problems.append(
+                f"{name} 用了「{'」「'.join(used)}」，判決不預測比賽結果，請改用「支持／不支持」等說法"
+            )
 
     unknown_minority = [code for code in output.minority_jurors if code not in jury_groups]
     if unknown_minority:
@@ -178,6 +205,28 @@ def juror_json_schema() -> dict[str, Any]:
 
 def judge_json_schema() -> dict[str, Any]:
     return JudgeOutput.model_json_schema()
+
+
+def describe_validation_error(exc: ValidationError) -> str:
+    """把 pydantic 的錯誤轉成模型看得懂、可以照著修正的中文說明。"""
+    parts = []
+    for err in exc.errors():
+        loc = ".".join(str(part) for part in err["loc"]) or "(整體)"
+        ctx = err.get("ctx", {})
+        kind = err["type"]
+        if kind == "too_long" and "max_length" in ctx:
+            parts.append(f"{loc} 給了 {ctx.get('actual_length', '太多')} 項，最多只能 {ctx['max_length']} 項")
+        elif kind == "too_short" and "min_length" in ctx:
+            parts.append(f"{loc} 至少要 {ctx['min_length']} 項")
+        elif kind == "missing":
+            parts.append(f"缺少 {loc} 欄位")
+        elif kind == "extra_forbidden":
+            parts.append(f"多了不該有的 {loc} 欄位")
+        elif kind == "literal_error":
+            parts.append(f"{loc} 不在允許的清單內（{ctx.get('expected', '')}）")
+        else:
+            parts.append(f"{loc}：{err['msg']}")
+    return "；".join(parts)
 
 
 def render_schema_file(schema: dict[str, Any]) -> str:

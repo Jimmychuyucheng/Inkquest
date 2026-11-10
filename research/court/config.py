@@ -43,6 +43,7 @@ class JudgeOutputLimits(_Strict):
     minority_max: int = Field(gt=0)
     disagreement_max: int = Field(gt=0)
     min_cited_jurors: int = Field(ge=0)
+    banned_words: list[str] = []
     length_tolerance: float = Field(ge=0)
 
 

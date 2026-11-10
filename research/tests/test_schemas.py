@@ -27,6 +27,9 @@ def test_valid_output_passes(settings):
 @pytest.mark.parametrize(
     "field, value",
     [
+        ("characters_in_text", "外婆"),
+        ("characters_in_text", [""]),
+        ("characters_in_text", ["人"] * 11),
         ("score", 11),
         ("score", -1),
         ("score", 7.5),
@@ -47,6 +50,18 @@ def test_invalid_structure_is_rejected(field, value):
     data[field] = value
     with pytest.raises(ValidationError):
         JurorOutput.model_validate(data)
+
+
+def test_characters_in_text_comes_first_and_may_be_empty(settings):
+    # 第一個欄位：模型會先列出人物再評論
+    assert list(JurorOutput.model_fields)[0] == "characters_in_text"
+    assert list(to_api_schema(juror_json_schema())["properties"])[0] == "characters_in_text"
+    data = valid_output()
+    data["characters_in_text"] = []  # 例如沒有人物的詩
+    assert parse_juror_output(json.dumps(data), settings).characters_in_text == []
+    del data["characters_in_text"]
+    with pytest.raises(OutputInvalid, match="缺少 characters_in_text 欄位"):
+        parse_juror_output(json.dumps(data), settings)
 
 
 def test_missing_and_extra_fields_are_rejected():
@@ -85,10 +100,11 @@ def test_comment_length_allows_twenty_percent_tolerance(settings, comment_len, o
 
 def test_one_line_length_tolerance(settings):
     data = valid_output()
-    data["one_line"] = "字" * 36
+    # 設定為 40 字、容許 20%，所以 48 字以內可接受
+    data["one_line"] = "字" * 48
     parse_juror_output(json.dumps(data), settings)
-    data["one_line"] = "字" * 37
-    with pytest.raises(OutputInvalid, match="one_line"):
+    data["one_line"] = "字" * 49
+    with pytest.raises(OutputInvalid, match="one_line 寫了 49 字，請縮短到 40 字以內"):
         parse_juror_output(json.dumps(data), settings)
 
 

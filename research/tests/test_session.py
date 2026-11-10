@@ -68,9 +68,9 @@ def test_group_requirement_relaxes_when_a_group_has_no_successful_juror(settings
 
 
 def test_judge_lengths_and_structure(settings):
-    with pytest.raises(OutputInvalid, match="verdict 只有"):
+    with pytest.raises(OutputInvalid, match="verdict 只寫了"):
         parse(settings, verdict="J01、J07、J13 都說好。")
-    with pytest.raises(OutputInvalid, match="verdict 有"):
+    with pytest.raises(OutputInvalid, match="verdict 寫了"):
         parse(settings, verdict="J01、J07、J13。" + "長" * 500)
     with pytest.raises(OutputInvalid, match="headline"):
         parse(settings, headline="長" * 31)
@@ -88,6 +88,43 @@ def test_judge_lengths_and_structure(settings):
         parse(settings, author_wellbeing_flag="false")
     with pytest.raises(OutputInvalid, match="格式不符"):
         parse(settings, win_probability=0.8)
+
+
+def test_judge_must_not_use_prediction_words(settings):
+    assert settings.judge_output.banned_words == ["入選", "得獎", "決審", "獲獎"]
+    with pytest.raises(OutputInvalid, match="headline 用了「入選」"):
+        parse(settings, headline="有潛力的入選之作")
+    with pytest.raises(OutputInvalid, match="verdict 用了「得獎」"):
+        parse(settings, verdict="J01、J07、J13 都支持得獎。" + "補" * 240)
+    with pytest.raises(OutputInvalid, match="minority_opinion 用了「決審」"):
+        parse(settings, minority_opinion="離決審還有距離。" + "少" * 110)
+    with pytest.raises(OutputInvalid, match="top_strengths 用了「獲獎」"):
+        parse(settings, top_strengths=["有獲獎的實力"])
+    parse(settings, verdict="J01、J07、J13 都表示支持。" + "補" * 240)
+
+
+def test_judge_prompt_has_group_structure_and_fidelity_rules(settings):
+    provider = MockProvider()
+    session(settings, provider)
+    system = provider.requests[-1].system
+    assert "依三個組別整理意見" in system and "group_means" in system
+    assert "只能使用那位陪審員實際寫過的內容" in system
+    assert "「入選」、「得獎」、「決審」、「獲獎」" in system
+    assert '"group_means"' in provider.requests[-1].user
+    assert "{" not in system
+
+
+def test_validation_errors_are_described_in_plain_chinese(settings):
+    from conftest import valid_output
+    from court.juror import parse_juror_output
+
+    data = valid_output()
+    data["tags"] = ["意象", "結構", "節奏", "人物", "情感"]
+    with pytest.raises(OutputInvalid, match="tags 給了 5 項，最多只能 3 項"):
+        parse_juror_output(json.dumps(data, ensure_ascii=False), settings)
+    del data["comment"]
+    with pytest.raises(OutputInvalid, match="缺少 comment 欄位"):
+        parse_juror_output(json.dumps(data, ensure_ascii=False), settings)
 
 
 def test_judge_schema_export_in_sync_and_api_safe():
