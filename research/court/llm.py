@@ -3,7 +3,8 @@
 - anthropic：官方 SDK，真實呼叫（會花錢）。
 - mock：不呼叫任何模型，回傳符合 schema 的假資料；自動化測試一律用這個。
 
-API key 由 SDK 自己從環境變數讀取，這個模組不讀取、不記錄、不輸出金鑰。
+API key 一律從專案根目錄的 .env 讀取並明確傳給 client，不使用 shell 環境裡的任何憑證。
+這個模組只對外提供金鑰的末四碼（供對照 Console），不記錄、不輸出完整金鑰。
 """
 
 from __future__ import annotations
@@ -13,9 +14,15 @@ import json
 import random
 import time
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any, Protocol
 
-from .config import MockConfig, Settings, resolve_provider_name
+from dotenv import dotenv_values
+
+from .config import REPO_ROOT, MockConfig, Settings, resolve_provider_name
+
+ENV_PATH = REPO_ROOT / ".env"
+API_KEY_NAME = "ANTHROPIC_API_KEY"
 
 
 class LLMCallError(Exception):
@@ -56,22 +63,36 @@ class LLMProvider(Protocol):
     async def complete(self, request: LLMRequest) -> LLMResponse: ...
 
 
+def read_api_key_from_env_file(env_path: Path | None = None) -> str:
+    """只從 .env 檔讀取 ANTHROPIC_API_KEY。
+
+    刻意不看 os.environ：shell 裡就算有同名變數或其他 Anthropic 憑證，也不會被使用，
+    確保費用記在 .env 那把金鑰所屬的 workspace。
+    """
+    path = env_path or ENV_PATH
+    key = (dotenv_values(path).get(API_KEY_NAME) or "").strip() if path.is_file() else ""
+    if not key:
+        raise LLMCallError(
+            f"在 {path} 找不到 {API_KEY_NAME}。請照 .env.example 建立 .env 並填入金鑰，"
+            "或改用 LLM_PROVIDER=mock。",
+            retryable=False,
+        )
+    return key
+
+
 class AnthropicProvider:
     name = "anthropic"
 
-    def __init__(self) -> None:
+    def __init__(self, env_path: Path | None = None) -> None:
         import anthropic
 
         self._anthropic = anthropic
-        try:
-            # 重試由我們自己的流程控制（PRD：最多重試 2 次），所以關掉 SDK 內建的重試
-            self._client = anthropic.AsyncAnthropic(max_retries=0)
-        except anthropic.AnthropicError as exc:
-            raise LLMCallError(
-                "找不到 Anthropic API 金鑰。請確認專案根目錄的 .env 有設定 ANTHROPIC_API_KEY，"
-                "或改用 LLM_PROVIDER=mock。",
-                retryable=False,
-            ) from exc
+        api_key = read_api_key_from_env_file(env_path)
+        # 只保留末四碼供顯示；完整金鑰只交給 SDK
+        self.key_hint = f"...{api_key[-4:]}"
+        # 明確傳入 api_key 時，SDK 不會再讀環境變數或本機設定檔裡的憑證。
+        # 重試由我們自己的流程控制（PRD：最多重試 2 次），所以關掉 SDK 內建的重試。
+        self._client = anthropic.AsyncAnthropic(api_key=api_key, max_retries=0)
 
     async def complete(self, request: LLMRequest) -> LLMResponse:
         anthropic = self._anthropic

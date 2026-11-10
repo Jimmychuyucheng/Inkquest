@@ -53,7 +53,8 @@ devlog.md
 ## 必須遵守的規則
 
 **安全與費用**
-- API key 與所有金鑰只放在 `.env`（已列入 `.gitignore`），不得寫進程式碼、不得出現在前端、不得印在 log 裡
+- API key 與所有金鑰只放在 `.env`（已列入 `.gitignore`），不得寫進程式碼、不得出現在前端、不得印在 log 裡（真實呼叫時只印末四碼供對照 Console）
+- 研究腳本的 Anthropic 金鑰一律從 `.env` 檔讀取並明確傳給 client，不使用 shell 環境裡的憑證
 - 提供 `.env.example`，列出所有變數名稱與說明
 - 自動化測試一律使用 `LLM_PROVIDER=mock`，不得呼叫真實 API
 - 會呼叫真實 API 的指令，執行前先告訴我預計呼叫幾次、大約花多少錢，等我同意

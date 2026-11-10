@@ -38,7 +38,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--out", type=Path, default=None, help="把結果另存成 JSON 檔（選填）")
     args = parser.parse_args(argv)
 
-    # 只把 .env 載入環境變數，不讀取也不輸出其中的內容
+    # 載入 .env 只是為了 LLM_PROVIDER 這類設定；
+    # API 金鑰由 court.llm 直接從 .env 檔讀取，不經過環境變數
     load_dotenv(REPO_ROOT / ".env")
     settings = load_settings()
 
@@ -71,6 +72,10 @@ def main(argv: list[str] | None = None) -> int:
         f"供應商 {provider_name}｜模型 {settings.models['juror']}",
         file=sys.stderr,
     )
+    key_hint = getattr(provider, "key_hint", None)
+    if key_hint:
+        # 只印末四碼，讓你對照 Console；完整金鑰不會出現在任何輸出
+        print(f"使用金鑰 {key_hint}（來自 .env）", file=sys.stderr)
 
     result = asyncio.run(
         run_juror(
