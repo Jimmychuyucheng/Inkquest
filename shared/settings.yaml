@@ -1,0 +1,65 @@
+# 研究腳本與 Web App 共用的預設值。數值一律改這裡，不要寫死在程式裡。
+
+# 模型供應商：anthropic 或 mock。環境變數 LLM_PROVIDER 會覆蓋這個值。
+default_provider: anthropic
+
+# 模型名稱（PRD 第 10 節）。法官之後可能改成 claude-sonnet-5-5。
+models:
+  juror: claude-haiku-5-5
+  judge: claude-haiku-5-5
+  advice: claude-haiku-5-5
+
+# 陪審員呼叫設定
+juror:
+  # PRD 的「陪審員輸出上限 800 tokens」是預期長度；這裡留餘裕，避免 JSON 被截斷。
+  max_tokens: 2000
+  # Haiku 5.5 預設會開啟思考（計入輸出 token）。陪審員關閉以節省費用與時間。
+  # 可選：disabled、adaptive
+  thinking: disabled
+  # 思考與輸出的用力程度：low、medium、high；留空表示使用模型預設值。
+  effort:
+  timeout_seconds: 45
+  # 逾時或格式不合時的重試次數（不含第一次）
+  max_retries: 2
+
+# 陪審員輸出的字數規定（PRD 第 5 節）；超出 20% 以內可接受
+juror_output:
+  one_line_max: 30
+  comment_min: 120
+  comment_max: 250
+  length_tolerance: 0.2
+
+# 文類與字數限制（PRD 第 3 節）。字數不含空白與換行；新詩行數以非空白行計。
+genres:
+  散文:
+    min_chars: 300
+    max_chars: 5000
+    description: 以個人經驗為本的散文
+  新詩:
+    min_chars: 20
+    max_chars: 1500
+    max_lines: 60
+    description: 現代詩，分行與斷句是表現的一部分
+  小品文:
+    min_chars: 100
+    max_chars: 1000
+    description: 篇幅短小、以一個片刻或意念為核心的散文
+  極短篇:
+    min_chars: 100
+    max_chars: 1500
+    description: 篇幅極短、重視情節轉折的小說
+
+# 估算費用用的單價（美元／每百萬 token）。以官方定價為準，價格變動時更新這裡。
+pricing:
+  claude-haiku-5-5:
+    input_per_mtok: 0.10
+    output_per_mtok: 0.50
+  claude-sonnet-5-5:
+    input_per_mtok: 2.00
+    output_per_mtok: 10.00
+
+# 假資料模式（LLM_PROVIDER=mock）：不呼叫任何模型
+mock:
+  min_delay_seconds: 1
+  max_delay_seconds: 3
+  failure_rate: 0.05

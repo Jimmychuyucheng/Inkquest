@@ -1,0 +1,106 @@
+{
+  "$defs": {
+    "Point": {
+      "additionalProperties": false,
+      "properties": {
+        "point": {
+          "description": "優點或缺點的說明",
+          "minLength": 1,
+          "title": "Point",
+          "type": "string"
+        },
+        "quote": {
+          "description": "原文引句，可為空字串",
+          "title": "Quote",
+          "type": "string"
+        }
+      },
+      "required": [
+        "point",
+        "quote"
+      ],
+      "title": "Point",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "單篇模式的陪審員輸出。",
+  "properties": {
+    "score": {
+      "description": "0～10 的整數",
+      "maximum": 10,
+      "minimum": 0,
+      "title": "Score",
+      "type": "integer"
+    },
+    "would_support_award": {
+      "description": "進入決審時是否支持得獎",
+      "title": "Would Support Award",
+      "type": "boolean"
+    },
+    "one_line": {
+      "description": "一句話總評",
+      "minLength": 1,
+      "title": "One Line",
+      "type": "string"
+    },
+    "comment": {
+      "description": "完整評語，用該職業的口吻",
+      "minLength": 1,
+      "title": "Comment",
+      "type": "string"
+    },
+    "strengths": {
+      "items": {
+        "$ref": "#/$defs/Point"
+      },
+      "maxItems": 3,
+      "minItems": 1,
+      "title": "Strengths",
+      "type": "array"
+    },
+    "weaknesses": {
+      "items": {
+        "$ref": "#/$defs/Point"
+      },
+      "maxItems": 3,
+      "minItems": 1,
+      "title": "Weaknesses",
+      "type": "array"
+    },
+    "tags": {
+      "items": {
+        "enum": [
+          "意象",
+          "結構",
+          "節奏",
+          "人物",
+          "情感",
+          "題材",
+          "語言",
+          "開頭",
+          "結尾",
+          "真實感",
+          "可讀性",
+          "原創性"
+        ],
+        "type": "string"
+      },
+      "maxItems": 3,
+      "minItems": 1,
+      "title": "Tags",
+      "type": "array"
+    }
+  },
+  "required": [
+    "score",
+    "would_support_award",
+    "one_line",
+    "comment",
+    "strengths",
+    "weaknesses",
+    "tags"
+  ],
+  "title": "JurorOutput",
+  "type": "object"
+}

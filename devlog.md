@@ -15,3 +15,21 @@
   - 以下幾項是 AI 依我的決定推論出來、文件原本沒有明講的，待我確認：A-6 白名單模式隨 E-4 一併延後；B-3 整項（含 .txt）延後；D-7 整項（含複製）延後；後台「重跑法官」按鈕延後；E-6 的匯出欄位。
 - 測試方式與結果：本次只改文件，沒有程式。
 - API 用量與費用：0 次，US$0。
+
+## 2026-11-10 R1 研究腳本：單一陪審員（程式完成，真實呼叫待驗證）
+
+- 做了什麼：
+  - `shared/`：`personas.yaml`（20 位）、`settings.yaml`（模型、字數、重試、逾時、單價、mock 設定）、陪審員 system／user prompt 模板、匯出的 `schemas/juror_output.schema.json`。
+  - `research/court/`：`config`（讀設定）、`personas`、`text`（字數與文類檢查）、`schemas`（pydantic，PRD 第 5 節單篇格式）、`prompts`（模板組裝）、`llm`（anthropic／mock 兩種供應商）、`juror`（呼叫 → 驗證 → 重試）。
+  - `research/run_juror.py`：命令列，指定陪審員、文類、文章檔，輸出驗證過的 JSON 與 token 用量。
+  - 範例散文與插入注入字串的版本（`research/samples/`）、`.env.example`、README。
+- 遇到的問題與解法：
+  - 結構化輸出的 JSON Schema 不支援長度與數值範圍等關鍵字 → 傳給模型的版本先去掉這些限制，收到輸出後再由 pydantic 與字數檢查把關。
+  - 文章內容若含 `</article>` 會提前結束待評區塊 → 組 prompt 時把文章裡的 article 標記換成全形括號。
+  - 文章內容若含 `{genre}` 之類的字樣可能被模板二次替換 → 模板只掃描一次。
+  - 重試時把「上次哪裡不合格」附在 `</article>` 之後，讓模型知道要修正什麼。
+- AI 寫錯、我修正的地方：
+  - PRD 人設表有三處錯字（「不資袋」「掌廹」「細致」），AI 在 `personas.yaml` 改為「不掉書袋」「掌廚」「細緻」，並同步修正 PRD 前兩處；待我確認。
+  - （真實呼叫後補記）
+- 測試方式與結果：`cd research && ../.venv/bin/python -m pytest`，57 項全部通過，全部使用 mock；涵蓋 JSON 驗證、字數容許範圍、重試與放棄、不可重試的錯誤、輸出被截斷、`<article>` 包裝與注入字串位置、命令列端到端。真實 API 的驗證尚未執行。
+- API 用量與費用：0 次，US$0（真實呼叫待同意後執行）。
