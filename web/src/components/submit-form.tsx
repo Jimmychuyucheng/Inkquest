@@ -1,14 +1,16 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { copy } from "@/lib/copy";
 import { GENRES, settings } from "@/lib/core/shared";
 import { countChars, countLines } from "@/lib/core/text";
 
-// W1 的基本投稿表單：用來實際走一次「伺服器端檢查 → 額度 → 建立投稿」。
+// 基本投稿表單：伺服器端檢查 → 額度 → 建立投稿 → 前往開庭頁。
 // 版面、草稿與完整的互動在 W3 完成。
 export function SubmitForm({ remaining, limit }: { remaining: number; limit: number }) {
   const t = copy.submit;
+  const router = useRouter();
   const [genre, setGenre] = useState(GENRES[0]);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -44,6 +46,7 @@ export function SubmitForm({ remaining, limit }: { remaining: number; limit: num
       if (response.ok) {
         setLeft((n) => Math.max(n - 1, 0));
         setMessage({ kind: "ok", text: t.queued });
+        if (typeof data.id === "string") router.push(`/court/${data.id}`);
       } else {
         setMessage({ kind: "error", text: data.message ?? copy.errors.generic });
       }

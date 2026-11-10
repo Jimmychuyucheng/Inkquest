@@ -162,3 +162,79 @@ export function parseJudgeOutput(
   if (problems.length > 0) throw new OutputInvalid(problems.join("；"));
   return result.data;
 }
+
+// ---- 修改建議（PRD 第 5 節）----
+
+export const adviceOutputSchema = z.strictObject({
+  suggestions: z.array(
+    z.strictObject({
+      quote: z.string().min(1),
+      issue: z.string().min(1),
+      direction: z.string().min(1),
+      example: z.string(),
+      raised_by: z.array(z.string().regex(/^J\d{2}$/)),
+    }),
+  ),
+});
+export type AdviceOutput = z.infer<typeof adviceOutputSchema>;
+
+const withoutSpaces = (text: string) => text.replace(/\s+/g, "");
+
+/**
+ * 修改建議的檢查：條數、引句必須是原文、陪審員編號必須在本次陪審團內。
+ * article：投稿原文；juryCodes：本次成功評閱的陪審員編號。
+ */
+export function parseAdviceOutput(
+  text: string,
+  settings: Settings,
+  article: string,
+  juryCodes: readonly string[],
+): AdviceOutput {
+  const result = adviceOutputSchema.safeParse(parseJson(text));
+  if (!result.success) throw new OutputInvalid(`JSON 格式不符：${describeIssues(result.error)}`);
+  const { min_items: min, max_items: max } = settings.advice_output;
+  const items = result.data.suggestions;
+  const problems: string[] = [];
+  if (items.length < min) problems.push(`suggestions 只有 ${items.length} 條，至少要 ${min} 條`);
+  if (items.length > max) problems.push(`suggestions 有 ${items.length} 條，最多只能 ${max} 條`);
+  const source = withoutSpaces(article);
+  items.forEach((item, index) => {
+    if (!source.includes(withoutSpaces(item.quote))) {
+      problems.push(`第 ${index + 1} 條的 quote「${item.quote}」不是文章裡的原文，請逐字複製文章中的句子`);
+    }
+    const unknown = item.raised_by.filter((code) => !juryCodes.includes(code));
+    if (unknown.length > 0) {
+      problems.push(`第 ${index + 1} 條的 raised_by 有不在本次陪審團的編號：${unknown.join("、")}`);
+    }
+  });
+  if (problems.length > 0) throw new OutputInvalid(problems.join("；"));
+  return result.data;
+}
+
+// ---- 傳給模型結構化輸出用的 JSON Schema ----
+
+const UNSUPPORTED_KEYS = new Set([
+  "minimum", "maximum", "exclusiveMinimum", "exclusiveMaximum",
+  "minLength", "maxLength", "minItems", "maxItems", "title", "pattern", "$schema",
+]);
+
+/** 去掉結構化輸出不支援的關鍵字（與 research/court/schemas.py 的 to_api_schema 相同）。 */
+export function toApiSchema(schema: unknown): Record<string, unknown> {
+  const strip = (node: unknown, inProperties = false): unknown => {
+    if (Array.isArray(node)) return node.map((item) => strip(item));
+    if (node !== null && typeof node === "object") {
+      return Object.fromEntries(
+        Object.entries(node)
+          // properties / $defs 底下的 key 是欄位名稱，不是關鍵字，不能刪
+          .filter(([key]) => inProperties || !UNSUPPORTED_KEYS.has(key))
+          .map(([key, value]) => [key, strip(value, key === "properties" || key === "$defs")]),
+      );
+    }
+    return node;
+  };
+  return strip(schema) as Record<string, unknown>;
+}
+
+export function adviceApiSchema(): Record<string, unknown> {
+  return toApiSchema(z.toJSONSchema(adviceOutputSchema));
+}

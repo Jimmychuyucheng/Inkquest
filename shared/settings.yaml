@@ -100,6 +100,21 @@ judge_output:
   banned_words: [入選, 得獎, 決審, 獲獎]
   length_tolerance: 0.2
 
+# 修改建議呼叫設定（只在使用者勾選該模組時執行；研究腳本不使用）
+advice:
+  max_tokens: 4000
+  thinking: adaptive
+  effort:
+  timeout_seconds: 60
+  max_retries: 2
+
+# 修改建議輸出的規定（PRD 第 4、5 節：3～6 條，每條引用原文）
+advice_output:
+  min_items: 3
+  max_items: 6
+  # 整理給修改建議角色看的「陪審員最常提到的缺點」最多幾條
+  max_weaknesses: 12
+
 # 計分與得獎潛力（PRD 第 6 節）
 stats:
   # 爭議程度（2026-11-10 依 W0 實測調整：陪審員分數的標準差只有 0～0.5，原門檻幾乎達不到）

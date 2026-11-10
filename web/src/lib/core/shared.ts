@@ -55,6 +55,8 @@ export interface Settings {
     banned_words: string[];
     length_tolerance: number;
   };
+  advice: RoleConfig;
+  advice_output: { min_items: number; max_items: number; max_weaknesses: number };
   stats: {
     controversy_high_std: number;
     controversy_mid_std: number;
@@ -97,3 +99,4 @@ export const prompts = shared.prompts;
 
 export const GENRES = Object.keys(settings.genres);
 export const GROUPS: Group[] = ["文學專業", "一般讀者", "跨界視角"];
+export const schemas = shared.schemas;

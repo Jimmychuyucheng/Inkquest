@@ -75,12 +75,29 @@ try {
   let status = await admin.rpc("get_quota_status", { p_user_id: alice.id });
   check("剩餘次數為 0", status.data?.remaining === 0 && status.data.used === 3, JSON.stringify(status.data));
 
+  // 把前面的投稿時間往前調，避免下面的步驟被「每分鐘 3 次」擋住（頻率限制另外測）
+  const earlier = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+  await admin.from("submissions").update({ created_at: earlier }).eq("user_id", alice.id);
   await finish(ids[0], "failed");
   status = await admin.rpc("get_quota_status", { p_user_id: alice.id });
   check("失敗的投稿不扣次數", status.data?.remaining === 1, JSON.stringify(status.data));
   r = await create(alice.id);
   check("退回次數後可以再投一次", r.data?.ok === true, JSON.stringify(r.data));
   if (r.data?.ok) await finish(r.data.id, "done");
+
+  console.log("頻率限制（需先執行 0002_rate_limit.sql）");
+  const carol = await makeUser("c");
+  users.push(carol);
+  await carol.client.rpc("accept_terms", { p_research_consent: false });
+  for (let i = 1; i <= 3; i += 1) {
+    r = await create(carol.id);
+    if (r.data?.ok) await finish(r.data.id, "failed");
+  }
+  r = await create(carol.id);
+  check("一分鐘內連續失敗 3 次後，第 4 次被擋下", r.data?.ok === false && r.data.reason === "rate_limited", JSON.stringify(r.data));
+  await admin.from("submissions").update({ created_at: earlier }).eq("user_id", carol.id);
+  r = await create(carol.id);
+  check("過了一分鐘可以再送", r.data?.ok === true, JSON.stringify(r.data));
 
   console.log("同時送出");
   const burst = await Promise.all(Array.from({ length: 6 }, () => create(bob.id)));

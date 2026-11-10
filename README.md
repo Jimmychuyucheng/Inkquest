@@ -101,7 +101,7 @@ cd research
 ### 第一次設定
 
 1. **建立 Supabase 專案**（supabase.com → New project，區域選 Tokyo 或 Singapore）。
-2. **建立資料表**：Supabase 左側 SQL Editor → 貼上 [`web/supabase/migrations/0001_init.sql`](web/supabase/migrations/0001_init.sql) 的全部內容 → Run。
+2. **建立資料表**：Supabase 左側 SQL Editor → 依序貼上 [`web/supabase/migrations/`](web/supabase/migrations/) 裡每個檔案的全部內容並 Run（`0001_init.sql`、`0002_rate_limit.sql`）。之後有新的 migration 檔時，同樣貼上執行一次。
 3. **設定 Google 登入**：
    1. Google Cloud Console → 建立專案 → APIs & Services → OAuth consent screen：類型選 External，填應用程式名稱與你的 email；測試階段把要登入的 Google 帳號加進 Test users（或直接按 Publish app）。
    2. Credentials → Create Credentials → OAuth client ID → Web application。
@@ -131,11 +131,29 @@ cd research
 ```bash
 npm run dev         # 本機啟動 http://localhost:3000
 npm test            # 單元測試（不需要資料庫、不呼叫 AI）
-npm run test:db     # 用真實的 Supabase 測試額度與資料權限（會建立並刪除兩個測試帳號，不呼叫 AI）
+npm run test:db     # 用真實的 Supabase 測試額度、資料權限與開庭結果的寫入（會建立並刪除測試帳號，不呼叫 AI）
+npm run test:e2e    # 端對端：經由背景工作跑完一次開庭（需先啟動網站與 Inngest 開發伺服器，不呼叫 AI）
 npm run typecheck   # 型別檢查
 npm run lint
 npm run build       # 正式建置
 ```
+
+### 開庭（背景工作）
+
+投稿後，陪審員與法官在背景工作（Inngest）中執行。本機開發要開兩個終端機：
+
+```bash
+# 終端機 1：網站
+cd web && npm run dev
+# 終端機 2：Inngest 開發伺服器（不需要帳號與金鑰；管理畫面在 http://localhost:8288）
+npx inngest-cli@latest dev -u http://localhost:3000/api/inngest
+```
+
+- `web/.env.local` 的 `LLM_PROVIDER=mock` 時使用假資料，不呼叫模型、不花錢；開發畫面與自動化測試都用這個。
+- 改成 `LLM_PROVIDER=anthropic` 並填入 `ANTHROPIC_API_KEY` 才會真的呼叫模型（每次投稿 11～12 次呼叫，約 US$0.01～0.02）。啟動後第一次呼叫時，終端機會印出金鑰末四碼。
+- 正式環境（`NODE_ENV=production`）設成 mock 會拒絕啟動，避免使用者拿到假的判決。
+- 假資料模式的投稿一樣會佔用每日次數；開發時可以在 SQL Editor 把自己的額度調高：
+  `update public.profiles set daily_quota_override = 100 where email = '你的 email';`
 
 人設、prompt、設定都在根目錄的 `shared/`；`npm run dev`、`build`、`test` 會自動把它們同步到 `web/src/generated/`。
 改了 `shared/personas.yaml` 之後，再執行一次 `npm run seed` 更新資料庫。

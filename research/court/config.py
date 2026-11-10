@@ -47,6 +47,14 @@ class JudgeOutputLimits(_Strict):
     length_tolerance: float = Field(ge=0)
 
 
+class AdviceOutputLimits(_Strict):
+    """修改建議的規定；研究腳本不使用，但同一份設定檔要能通過檢查。"""
+
+    min_items: int = Field(ge=1)
+    max_items: int = Field(ge=1)
+    max_weaknesses: int = Field(ge=1)
+
+
 class JuryConfig(_Strict):
     size_by_group: dict[str, int]
     min_success: int = Field(ge=1)
@@ -110,6 +118,8 @@ class Settings(_Strict):
     jury: JuryConfig
     judge: RoleConfig
     judge_output: JudgeOutputLimits
+    advice: RoleConfig
+    advice_output: AdviceOutputLimits
     stats: StatsConfig
     genres: dict[str, GenreRule]
     pricing: dict[str, Price]

@@ -1,0 +1,24 @@
+文類：{genre}（{genre_description}）
+標題：{title}
+<article>
+{content}
+</article>
+
+以下是法官的判決（JSON）。
+<verdict>
+{verdict_json}
+</verdict>
+
+以下是陪審員最常提到的缺點，每一條附上提出的陪審員編號與他引用的原文（可能為空）。
+<weaknesses>
+{weaknesses_json}
+</weaknesses>
+
+請依下列 JSON 格式輸出修改建議。
+
+- suggestions：{min_items}～{max_items} 條，每條包含：
+  - quote：從文章逐字複製的原文。
+  - issue：問題說明。
+  - direction：修改方向。
+  - example：示範改寫，一句；不需要時給空字串。
+  - raised_by：提過這個問題的陪審員編號陣列，例如 ["J03", "J05"]；沒有時給空陣列。

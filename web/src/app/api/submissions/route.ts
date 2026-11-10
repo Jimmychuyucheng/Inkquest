@@ -1,12 +1,13 @@
 // 投稿 API（PRD 第 9 節）：只負責驗證與排隊。
 // 額度、字數、登入身分全部在這裡（伺服器端）檢查，不依賴前端。
-// 陪審員與法官在背景工作中執行（W2）。
+// 陪審員與法官在背景工作中執行（src/inngest/functions.ts）。
 import { NextResponse, type NextRequest } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { copy } from "@/lib/copy";
 import { rejectMessage, validateSubmission } from "@/lib/core/quota";
 import { settings } from "@/lib/core/shared";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { COURT_EVENT, inngest } from "@/inngest/client";
 
 const REJECT_STATUS: Record<string, number> = {
   terms_required: 403,
@@ -48,6 +49,17 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // 4.（W2）在這裡把投稿交給背景工作佇列
+  // 4. 交給背景工作佇列；陪審員與法官在背景執行，這個請求立刻回應
+  try {
+    await inngest.send({ name: COURT_EVENT, data: { submissionId: data.id } });
+  } catch (sendError) {
+    console.error("送出背景工作失敗", sendError instanceof Error ? sendError.name : "");
+    // 標記為失敗，等於退回這一次的額度
+    await admin
+      .from("submissions")
+      .update({ status: "failed", error: "internal", finished_at: new Date().toISOString() })
+      .eq("id", data.id);
+    return NextResponse.json({ message: copy.errors.enqueueFailed }, { status: 503 });
+  }
   return NextResponse.json({ id: data.id }, { status: 201 });
 }
