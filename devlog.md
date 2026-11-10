@@ -298,3 +298,4 @@ Haiku 70 次、Sonnet 5 次、注入補測 10 次，合計約 US$0.31。專案�
 - 爭議度上界改為「小於 0.70」：7／10 支持不再被判為「高」（3／10 仍算）。PRD 第 6 節、設定檔註解、Python 與 TypeScript 的計分、兩邊的測試與對照資料一起更新。已經存進資料庫的舊投稿統計不會回頭重算。
 - 法官與修改建議也記錄嘗試次數與退回原因：`web/supabase/migrations/0003_attempts.sql` 在 verdicts 與 advice 各加 `attempts`、`attempt_errors` 兩個欄位（改資料表，已先徵得同意）。不增加任何 API 呼叫或費用。
 - 測試：Python 113 項、Web 92 項通過。資料庫整合測試要等 0003 在 Supabase 執行後才能跑。
+- 0003 執行後重跑：`npm run test:db` 全部通過（含判決與修改建議的嘗試次數寫入）；`npm run test:e2e` 10 項全部通過（兩次開庭 7.6 秒、13.1 秒）；Web 單元測試 92 項、Python 113 項通過。瀏覽器上的即時更新仍待本人確認。
