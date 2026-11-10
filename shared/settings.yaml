@@ -118,7 +118,7 @@ advice_output:
 # 計分與得獎潛力（PRD 第 6 節）
 stats:
   # 爭議程度（2026-11-10 依 W0 實測調整：陪審員分數的標準差只有 0～0.5，原門檻幾乎達不到）
-  # 主要看支持比例：在 split_low～split_high 之間為「高」；標準差 >= high_std 也算「高」；
+  # 主要看支持比例：大於等於 split_low、小於 split_high 為「高」（7／10 支持不算高爭議）；標準差 >= high_std 也算「高」；
   # 標準差 >= mid_std 為「中」；其餘「低」
   controversy_high_std: 2.0
   controversy_mid_std: 0.8

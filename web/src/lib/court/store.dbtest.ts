@@ -63,7 +63,10 @@ describe("開庭結果寫入資料庫", () => {
 
     expect((await store.getVerdict(id))?.headline).toBeTruthy();
     expect(await store.hasAdvice(id)).toBe(true);
-    const { data: advice } = await admin.from("advice").select("output, model").eq("submission_id", id).single();
+    const { data: verdict } = await admin.from("verdicts").select("attempts, attempt_errors").eq("submission_id", id).single();
+    expect(verdict).toEqual({ attempts: 1, attempt_errors: [] });
+    const { data: advice } = await admin.from("advice").select("output, model, attempts").eq("submission_id", id).single();
+    expect(advice?.attempts).toBe(1);
     expect(advice?.output.suggestions.length).toBeGreaterThanOrEqual(3);
   });
 

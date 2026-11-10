@@ -98,6 +98,8 @@ export function createSupabaseStore(admin: SupabaseClient): CourtStore {
           model: result.model,
           input_tokens: result.inputTokens,
           output_tokens: result.outputTokens,
+          attempts: result.attempts,
+          attempt_errors: result.attemptErrors,
         }),
         "寫入判決",
       );
@@ -116,6 +118,8 @@ export function createSupabaseStore(admin: SupabaseClient): CourtStore {
           model: result.model,
           input_tokens: result.inputTokens,
           output_tokens: result.outputTokens,
+          attempts: result.attempts,
+          attempt_errors: result.attemptErrors,
         }),
         "寫入修改建議",
       );

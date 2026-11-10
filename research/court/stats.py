@@ -61,7 +61,7 @@ def compute_stats(
     }
 
     if std >= config.controversy_high_std or (
-        config.controversy_split_low <= ratio <= config.controversy_split_high
+        config.controversy_split_low <= ratio < config.controversy_split_high
     ):
         controversy = "高"
     elif std >= config.controversy_mid_std:

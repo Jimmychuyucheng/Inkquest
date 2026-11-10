@@ -102,7 +102,9 @@ describe("計分（與 Python 一致）", () => {
       computeStats(make(scores, supports), GROUPS, settings.stats).controversy;
     expect(level(Array(10).fill(7), 10)).toBe("低");
     expect(level(Array(10).fill(7), 5)).toBe("高"); // 支持比例 0.5
-    expect(level(Array(10).fill(7), 3)).toBe("高"); // 比例 0.3，在邊界上
+    expect(level(Array(10).fill(7), 3)).toBe("高"); // 比例 0.3，下界算在內
+    expect(level(Array(10).fill(7), 6)).toBe("高"); // 比例 0.6
+    expect(level(Array(10).fill(7), 7)).toBe("低"); // 比例 0.7，上界不算（7／10 支持不是高爭議）
     expect(level(Array(10).fill(7), 2)).toBe("低");
     expect(level([6, 6, 6, 6, 6, 8, 8, 8, 8, 8], 8)).toBe("中"); // 標準差 1.0
     expect(level([3, 3, 3, 3, 3, 9, 9, 9, 9, 9], 10)).toBe("高"); // 標準差 3

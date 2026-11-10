@@ -329,7 +329,7 @@ R1 實測發現只靠「語氣」一欄，非專業人設（例如國小五年�
 | 得獎潛力（支持比例） | would\_support\_award 為 true 的人數 ÷ 成功陪審員數 | 「7 / 10 位陪審員支持得獎（0.70）」 |
 | 各組平均 | 文學專業、一般讀者、跨界視角三組各自平均 | 三個數字並排 |
 | 分數分布 | 0～10 每個分數的人數 | 長條圖 |
-| 爭議程度 | 主要看支持比例：介於 0.30～0.70 為「高」，分數標準差 ≥ 2.0 也算「高」；標準差 0.8～2.0 為「中」；其餘「低」 | 標籤 |
+| 爭議程度 | 主要看支持比例：大於等於 0.30、小於 0.70 為「高」，分數標準差 ≥ 2.0 也算「高」；標準差 0.8～2.0 為「中」；其餘「低」 | 標籤 |
 | 最常被提到的面向 | 統計所有 tags 出現次數，取前 3 | 標籤 |
 
 **得獎潛力的文字說明**（依支持比例顯示）
@@ -345,7 +345,7 @@ R1 實測發現只靠「語氣」一欄，非專業人設（例如國小五年�
 
 **計算細節**（2026-11-10 定案）：標準差採母體標準差（除以 n）；平均分與比例的四捨五入一律「遇 5 進位」（6.25 → 6.3），Python 與 TypeScript 必須算出相同結果。
 
-**爭議門檻的調整**（2026-11-10）：第零階段 5 篇實測，10 位陪審員分數的標準差只有 0.00～0.46，原訂門檻（標準差 1.2、支持比例 0.35～0.65）幾乎不可能達到，因此把「中」的標準差門檻降到 0.8，並以支持比例 0.30～0.70 作為主要判斷。
+**爭議門檻的調整**（2026-11-10）：第零階段 5 篇實測，10 位陪審員分數的標準差只有 0.00～0.46，原訂門檻（標準差 1.2、支持比例 0.35～0.65）幾乎不可能達到，因此把「中」的標準差門檻降到 0.8，並以支持比例 0.30～0.70 作為主要判斷。2026-11-11 再調整：上界改為「小於 0.70」。真實模型實測時，一篇 7／10 支持、分數標準差 0.46 的作品因為比例剛好 0.70 被判為「高」，與實際情況不符；3／10 支持（0.30）仍算「高」。
 
 ## 7. 畫面規格
 
@@ -395,8 +395,8 @@ R1 實測發現只靠「語氣」一欄，非專業人設（例如國小五年�
 | `profiles` | id（對應登入帳號）、email、display\_name、role（user / admin）、daily\_quota\_override、terms\_accepted\_at、research\_consent（布林，預設 false）、research\_consent\_at、created\_at | 使用者資料；daily\_quota\_override 為空則用全站預設 |
 | `submissions` | id、user\_id、genre、title、content、char\_count、modules（陣列）、status、jury（本次抽中的 10 位編號）、jurors\_ok、stats（JSON）、error、created\_at、finished\_at | 一次投稿；status 為 queued / jurors\_running / judge\_running / advice\_running / done / failed |
 | `juror_results` | id、submission\_id、juror\_code（J01～J20）、persona\_version、status、output（JSON）、model、input\_tokens、output\_tokens、latency\_ms、attempts | 每位陪審員一筆 |
-| `verdicts` | submission\_id、output（JSON）、model、tokens | 法官結果 |
-| `advice` | submission\_id、output（JSON）、model、tokens | 修改建議；每篇最多一筆 |
+| `verdicts` | submission\_id、output（JSON）、model、tokens、attempts、attempt\_errors | 法官結果；attempts 為嘗試次數，attempt\_errors 為每次被退回的原因 |
+| `advice` | submission\_id、output（JSON）、model、tokens、attempts、attempt\_errors | 修改建議；每篇最多一筆 |
 | `personas` | code、name、group、background、focus、tone、voice\_traits、vocabulary\_rule、icon、enabled、version、updated\_at | 第 4 節的 20 位，後台可編輯；編輯時 version +1 |
 | `settings` | key、value（JSON） | 每日額度、全站上限、字數限制、模型名稱、併發數、閾值、白名單開關與名單 |
 

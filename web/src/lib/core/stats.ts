@@ -70,7 +70,7 @@ export function computeStats(
   let controversy: SessionStats["controversy"];
   if (
     std >= config.controversy_high_std ||
-    (ratio >= config.controversy_split_low && ratio <= config.controversy_split_high)
+    (ratio >= config.controversy_split_low && ratio < config.controversy_split_high)
   ) {
     controversy = "高";
   } else if (std >= config.controversy_mid_std) {
