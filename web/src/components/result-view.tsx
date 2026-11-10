@@ -1,9 +1,9 @@
 "use client";
 // 結果頁（PRD 第 7 節「結果頁由上到下」）。
-import { Check, ChevronDown, Copy, ThumbsDown, ThumbsUp } from "lucide-react";
+import { ArrowDown, ArrowUp, Check, ChevronDown, Copy, ThumbsDown, ThumbsUp, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { WaitForStatus } from "@/components/court-progress";
 import { GroupBadge, PersonaIcon, groupStyle, personaByCode } from "@/components/persona-icon";
 import { ScoreChart } from "@/components/score-chart";
@@ -60,18 +60,22 @@ function JurorCard({
   juror,
   expanded,
   onToggle,
+  highlighted,
+  onBack,
 }: {
   code: string;
   juror: ResultData["jurors"][number] | undefined;
   expanded: boolean;
   onToggle: () => void;
+  highlighted: boolean;
+  onBack: (() => void) | null;
 }) {
   const persona = personaByCode[code];
   const output = juror?.status === "ok" ? juror.output : null;
   if (!output) {
     // 失敗的陪審員顯示為灰色「本次缺席」
     return (
-      <li id={`juror-${code}`} className="flex items-center gap-3 rounded-lg border border-dashed bg-muted/50 p-4 text-muted-foreground">
+      <li id={`juror-${code}`} className={`flex scroll-mt-4 items-center gap-3 rounded-lg border border-dashed bg-muted/50 p-4 text-muted-foreground ${highlighted ? "ring-2 ring-brass" : ""}`}>
         <PersonaIcon code={code} dim />
         <span className="font-medium">{persona?.name ?? code}</span>
         <span className="text-sm">{t.absent}</span>
@@ -80,7 +84,7 @@ function JurorCard({
   }
   const style = groupStyle(code);
   return (
-    <li id={`juror-${code}`} className={`scroll-mt-4 rounded-lg border-l-4 border bg-card ${style.border}`}>
+    <li id={`juror-${code}`} className={`scroll-mt-4 rounded-lg border-l-4 border bg-card transition-shadow ${style.border} ${highlighted ? "ring-2 ring-brass ring-offset-2 ring-offset-background" : ""}`}>
       <button type="button" onClick={onToggle} aria-expanded={expanded} className="flex w-full items-start gap-3 p-4 text-left">
         <PersonaIcon code={code} />
         <span className="min-w-0 flex-1 space-y-1">
@@ -112,6 +116,12 @@ function JurorCard({
               <li key={tag} className="rounded-full bg-secondary px-2.5 py-0.5 text-xs text-secondary-foreground">{tag}</li>
             ))}
           </ul>
+          {onBack && (
+            <Button variant="outline" size="sm" onClick={onBack}>
+              <ArrowUp aria-hidden />
+              {t.backToReading}
+            </Button>
+          )}
         </div>
       )}
     </li>
@@ -127,6 +137,11 @@ export function ResultView({ data }: { data: ResultData }) {
   const [adding, setAdding] = useState<ModuleName | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [copied, setCopied] = useState<"idle" | "ok" | "failed">("idle");
+  // 點了哪個編號、在哪個位置點的：在原地顯示那位陪審員的摘要
+  const [peek, setPeek] = useState<{ code: string; at: string } | null>(null);
+  // 跳到卡片後：要捲動過去的卡片、暫時標亮的卡片、可以跳回去的位置
+  const pendingScroll = useRef<string | null>(null);
+  const [highlight, setHighlight] = useState<{ code: string; returnTo: string } | null>(null);
   const adviceRunning = data.status === "advice_running";
   const okCount = data.jurors.filter((j) => j.status === "ok").length;
   const jurorByCode = Object.fromEntries(data.jurors.map((j) => [j.juror_code, j]));
@@ -140,15 +155,28 @@ export function ResultView({ data }: { data: ResultData }) {
     });
   }
 
-  /** 點判決書裡的編號：展開卡片區、展開那一張，並捲動過去。 */
-  function jumpTo(code: string) {
+  /** 從摘要跳到完整卡片：展開卡片區與那一張，畫面更新後再捲動過去並標亮。 */
+  function jumpTo(code: string, returnTo: string) {
     setJurorsOpen(true);
     setExpanded((current) => new Set(current).add(code));
-    // 等卡片畫出來再捲動
-    requestAnimationFrame(() =>
-      requestAnimationFrame(() => document.getElementById(`juror-${code}`)?.scrollIntoView({ behavior: "smooth", block: "start" })),
-    );
+    setHighlight({ code, returnTo });
+    setPeek(null);
+    pendingScroll.current = code;
   }
+
+  function backToReading() {
+    const target = highlight?.returnTo;
+    setHighlight(null);
+    if (target) document.getElementById(target)?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+
+  // 卡片畫出來之後才捲動（在點擊當下卡片可能還不存在）
+  useEffect(() => {
+    const code = pendingScroll.current;
+    if (!code) return;
+    pendingScroll.current = null;
+    document.getElementById(`juror-${code}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [highlight, jurorsOpen, expanded]);
 
   async function addModule(name: ModuleName) {
     setAdding(name);
@@ -179,7 +207,45 @@ export function ResultView({ data }: { data: ResultData }) {
     }
   }
 
-  const linked = (text: string) =>
+  const showPeek = (code: string, at: string) =>
+    setPeek((current) => (current?.code === code && current.at === at ? null : { code, at }));
+
+  /** 在點擊位置下方顯示的陪審員摘要；不用離開正在讀的段落。 */
+  const peekPanel = (at: string) => {
+    if (peek?.at !== at) return null;
+    const code = peek.code;
+    const juror = jurorByCode[code];
+    const output = juror?.status === "ok" ? juror.output : null;
+    return (
+      <div id={`peek-${at}`} role="region" aria-label={personaByCode[code]?.name} className={`flex items-start gap-3 rounded-lg border-l-4 border bg-card p-4 shadow-sm ${groupStyle(code).border}`}>
+        <PersonaIcon code={code} />
+        <div className="min-w-0 flex-1 space-y-2">
+          <p className="flex flex-wrap items-center gap-2">
+            <span className="font-medium">{personaByCode[code]?.name ?? code}</span>
+            <span className="text-xs text-muted-foreground">{code}</span>
+            <GroupBadge code={code} />
+            {output && (
+              <span className="text-sm text-muted-foreground">
+                {output.score} 分・{output.would_support_award ? t.supportYes : t.supportNo}
+              </span>
+            )}
+          </p>
+          <p className="text-sm leading-relaxed">{output ? output.one_line : t.absent}</p>
+          {output && (
+            <Button variant="outline" size="sm" onClick={() => jumpTo(code, `anchor-${at}`)}>
+              <ArrowDown aria-hidden />
+              {t.peekFull}
+            </Button>
+          )}
+        </div>
+        <Button variant="ghost" size="icon-sm" onClick={() => setPeek(null)} aria-label={t.peekClose}>
+          <X aria-hidden />
+        </Button>
+      </div>
+    );
+  };
+
+  const linked = (text: string, at: string) =>
     splitByJurorCodes(text, data.jury).map((segment, index) =>
       segment.type === "text" ? (
         <span key={index}>{segment.text}</span>
@@ -187,8 +253,9 @@ export function ResultView({ data }: { data: ResultData }) {
         <button
           key={index}
           type="button"
-          onClick={() => jumpTo(segment.code)}
-          className={`rounded px-0.5 font-sans text-[0.9em] font-medium underline decoration-dotted underline-offset-4 ${groupStyle(segment.code).text}`}
+          onClick={() => showPeek(segment.code, at)}
+          aria-expanded={peek?.code === segment.code && peek.at === at}
+          className={`rounded px-0.5 font-sans text-[0.9em] font-medium underline decoration-dotted underline-offset-4 ${groupStyle(segment.code).text} ${peek?.code === segment.code && peek.at === at ? "bg-secondary" : ""}`}
           title={personaByCode[segment.code]?.name}
         >
           {segment.code}
@@ -225,7 +292,8 @@ export function ResultView({ data }: { data: ResultData }) {
 
       {/* 2. 法官總評 */}
       <Section title={t.verdictTitle}>
-        <p className="whitespace-pre-wrap font-serif text-[1.05rem] leading-loose">{linked(verdict.verdict)}</p>
+        <p id="anchor-verdict" className="scroll-mt-4 whitespace-pre-wrap font-serif text-[1.05rem] leading-loose">{linked(verdict.verdict, "verdict")}</p>
+        {peekPanel("verdict")}
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="rounded-lg border bg-card p-4">
             <h3 className="mb-2 text-sm font-medium">{t.strengths}</h3>
@@ -249,7 +317,7 @@ export function ResultView({ data }: { data: ResultData }) {
             <p className="mb-3 flex flex-wrap items-center gap-2 text-sm">
               <span className="text-muted-foreground">{t.minorityJurors}：</span>
               {verdict.minority_jurors.map((code) => (
-                <button key={code} type="button" onClick={() => jumpTo(code)} className="flex items-center gap-1.5 rounded-full border bg-card py-0.5 pl-0.5 pr-2.5">
+                <button key={code} type="button" onClick={() => showPeek(code, "minority")} aria-expanded={peek?.code === code && peek.at === "minority"} className="flex items-center gap-1.5 rounded-full border bg-card py-0.5 pl-0.5 pr-2.5">
                   <PersonaIcon code={code} size="sm" />
                   {personaByCode[code]?.name ?? code}
                 </button>
@@ -258,11 +326,13 @@ export function ResultView({ data }: { data: ResultData }) {
           ) : (
             <p className="mb-3 text-sm text-muted-foreground">{t.unanimous}</p>
           )}
-          <p className="whitespace-pre-wrap font-serif leading-loose">{linked(verdict.minority_opinion)}</p>
+          <p id="anchor-minority" className="scroll-mt-4 whitespace-pre-wrap font-serif leading-loose">{linked(verdict.minority_opinion, "minority")}</p>
+          {peek?.at === "minority" && <div className="mt-3">{peekPanel("minority")}</div>}
         </div>
         <div>
           <h3 className="mb-1 text-sm font-medium">{t.disagreementTitle}</h3>
-          <p className="font-serif leading-loose">{linked(verdict.biggest_disagreement)}</p>
+          <p id="anchor-disagreement" className="scroll-mt-4 font-serif leading-loose">{linked(verdict.biggest_disagreement, "disagreement")}</p>
+          {peek?.at === "disagreement" && <div className="mt-3">{peekPanel("disagreement")}</div>}
         </div>
       </Section>
 
@@ -319,7 +389,7 @@ export function ResultView({ data }: { data: ResultData }) {
           {data.advice ? (
             <ol className="space-y-4">
               {data.advice.suggestions.map((item, index) => (
-                <li key={index} className="space-y-3 rounded-lg border bg-card p-5">
+                <li key={index} id={`anchor-advice-${index}`} className="scroll-mt-4 space-y-3 rounded-lg border bg-card p-5">
                   <blockquote className="border-l-4 border-brass/60 pl-4 font-serif leading-loose">{item.quote}</blockquote>
                   <p className="text-sm leading-relaxed"><span className="font-medium">{t.adviceIssue}：</span>{item.issue}</p>
                   <p className="text-sm leading-relaxed"><span className="font-medium">{t.adviceDirection}：</span>{item.direction}</p>
@@ -333,12 +403,13 @@ export function ResultView({ data }: { data: ResultData }) {
                     <p className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                       {t.adviceRaisedBy}：
                       {item.raised_by.map((code) => (
-                        <button key={code} type="button" onClick={() => jumpTo(code)} className={`underline decoration-dotted underline-offset-4 ${groupStyle(code).text}`}>
+                        <button key={code} type="button" onClick={() => showPeek(code, `advice-${index}`)} aria-expanded={peek?.code === code && peek.at === `advice-${index}`} className={`underline decoration-dotted underline-offset-4 ${groupStyle(code).text}`}>
                           {personaByCode[code]?.name ?? code}
                         </button>
                       ))}
                     </p>
                   )}
+                  {peekPanel(`advice-${index}`)}
                 </li>
               ))}
             </ol>
@@ -356,7 +427,15 @@ export function ResultView({ data }: { data: ResultData }) {
         {jurorsOpen && (
           <ul className="space-y-3">
             {data.jury.map((code) => (
-              <JurorCard key={code} code={code} juror={jurorByCode[code]} expanded={expanded.has(code)} onToggle={() => toggle(code)} />
+              <JurorCard
+                key={code}
+                code={code}
+                juror={jurorByCode[code]}
+                expanded={expanded.has(code)}
+                onToggle={() => toggle(code)}
+                highlighted={highlight?.code === code}
+                onBack={highlight?.code === code ? backToReading : null}
+              />
             ))}
           </ul>
         )}
