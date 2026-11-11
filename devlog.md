@@ -375,6 +375,8 @@ Haiku 70 次、Sonnet 5 次、注入補測 10 次，合計約 US$0.31。專案�
 
 ## W5 部署清單（待辦）
 
+逐步操作見 `docs/deploy.md`。
+
 - [ ] Vercel 環境變數：`NEXT_PUBLIC_SUPABASE_URL`、`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`、`SUPABASE_SECRET_KEY`、`NEXT_PUBLIC_SITE_URL`（正式網址）、`LLM_PROVIDER=anthropic`、`ANTHROPIC_API_KEY`、`INNGEST_EVENT_KEY`、`INNGEST_SIGNING_KEY`
 - [ ] Vercel 要設定 `ADMIN_EMAILS`
 - [ ] Vercel 要設定 `RESEARCH_EXPORT_SALT`：與本機 `.env.local` 同一組，之後不要再換（換了匿名代號會全部改變，前後匯出對不起來）

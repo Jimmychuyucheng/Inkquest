@@ -98,6 +98,10 @@ cd research
 
 需要 Node.js 20 以上。
 
+### 部署到正式環境
+
+照 [docs/deploy.md](docs/deploy.md) 一步一步操作（Vercel、Supabase、Google 登入、Inngest、Anthropic 金鑰、上線前檢查、出問題時怎麼辦）。
+
 ### 第一次設定
 
 1. **建立 Supabase 專案**（supabase.com → New project，區域選 Tokyo 或 Singapore）。
