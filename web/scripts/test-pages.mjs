@@ -43,6 +43,10 @@ try {
   const post = (path, body) =>
     fetch(SITE + path, { method: "POST", headers: { cookie: cookie(), "Content-Type": "application/json" }, body: JSON.stringify(body) });
 
+  console.log("首頁");
+  const home = await (await fetch(SITE + "/")).text();
+  check("首頁有全員圖與選角畫面（20 位角色）", home.includes("/jurors/all.png") && home.includes("選擇角色") && (home.match(/\/jurors\/J\d{2}\.png/g) ?? []).length >= 20);
+
   console.log("登入與條款");
   let res = await get("/submit");
   check("還沒同意條款時，投稿頁導向條款頁", res.status >= 300 && res.status < 400 && (res.headers.get("location") ?? "").includes("/terms"), `狀態 ${res.status}`);
@@ -81,6 +85,10 @@ try {
   let missing = has(html, "頁面測試", "法官總評", "少數意見書", "最大分歧", "查看所有職業意見", "也想看", "複製法官總評", "再投一篇", "本回饋由 AI 模擬不同讀者產生");
   check("只勾法官總評：顯示判決、少數意見、補勾按鈕、複製與免責聲明", missing.length === 0, `缺少：${missing.join("、")}`);
   check("沒勾的模組不顯示（分數、修改建議）", !html.includes("分數分布") && !html.includes("修改方向"));
+  missing = has(html, "法官轉述", "看判決書全文", "/jurors/");
+  check("法官總評以看板呈現：角色圖、法官轉述，全文收在「看判決書全文」", missing.length === 0, `缺少：${missing.join("、")}`);
+  const panels = html.match(/id="anchor-mention-J\d{2}"/g) ?? [];
+  check("看板列出法官點名的陪審員（假資料點名 3 組各 1 位）", panels.length === 3, `找到 ${panels.length} 格`);
   check("別人看不到這篇（未登入導回首頁）", (await fetch(`${SITE}/result/${id}`, { redirect: "manual" })).status >= 300);
 
   console.log("補勾模組");

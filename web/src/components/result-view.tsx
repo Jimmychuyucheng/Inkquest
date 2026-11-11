@@ -1,6 +1,6 @@
 "use client";
 // 結果頁（PRD 第 7 節「結果頁由上到下」）。
-import { ArrowDown, ArrowUp, Check, ChevronDown, Copy, ThumbsDown, ThumbsUp, X } from "lucide-react";
+import { ArrowDown, ArrowUp, Check, ChevronDown, Copy, Gavel, ThumbsDown, ThumbsUp, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -9,7 +9,7 @@ import { GroupBadge, PersonaIcon, groupStyle, personaByCode } from "@/components
 import { ScoreChart } from "@/components/score-chart";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { copy } from "@/lib/copy";
-import { formatRatio, formatScore, moduleView, splitByJurorCodes, verdictCopyText, type ModuleName } from "@/lib/core/result";
+import { formatRatio, formatScore, moduleView, splitByJurorCodes, verdictCopyText, verdictMentions, type ModuleName } from "@/lib/core/result";
 import type { AdviceOutput, JudgeOutput, JurorOutput } from "@/lib/core/schemas";
 import { GROUPS } from "@/lib/core/shared";
 import type { SessionStats } from "@/lib/core/stats";
@@ -128,6 +128,71 @@ function JurorCard({
   );
 }
 
+/** 總評看板的一格：角色、分數、法官怎麼轉述他、他自己的一句話。 */
+function MentionPanel({
+  code,
+  sentences,
+  juror,
+  onMore,
+}: {
+  code: string;
+  sentences: string[];
+  juror: ResultData["jurors"][number] | undefined;
+  onMore: () => void;
+}) {
+  const persona = personaByCode[code];
+  const output = juror?.status === "ok" ? juror.output : null;
+  const style = groupStyle(code);
+  return (
+    <li id={`anchor-mention-${code}`} className={`flex scroll-mt-4 flex-col gap-3 rounded-xl border-2 bg-card p-4 ${style.border}`}>
+      <div className="flex items-center gap-3">
+        <PersonaIcon code={code} size="lg" dim={!output} />
+        <div className="min-w-0 flex-1">
+          <p className="font-medium">{persona?.name ?? code}</p>
+          <p className="flex items-center gap-2 text-xs text-muted-foreground">
+            {code}
+            <GroupBadge code={code} />
+          </p>
+        </div>
+        {output ? (
+          <div className="flex flex-col items-end gap-1">
+            <span className="font-heading text-2xl font-semibold leading-none">{output.score}</span>
+            <span className={`flex items-center gap-1 text-xs ${output.would_support_award ? "text-group-lay" : "text-muted-foreground"}`}>
+              {output.would_support_award ? <ThumbsUp className="size-3.5" aria-hidden /> : <ThumbsDown className="size-3.5" aria-hidden />}
+              {output.would_support_award ? t.supportYes : t.supportNo}
+            </span>
+          </div>
+        ) : (
+          <span className="text-sm text-muted-foreground">{t.absent}</span>
+        )}
+      </div>
+      {output && (
+        // 對話框：陪審員本人的一句話總評
+        <div className={`relative rounded-xl border-2 bg-background px-4 py-3 ${style.border}`}>
+          <span aria-hidden className={`absolute -top-[9px] left-6 size-4 rotate-45 border-l-2 border-t-2 bg-background ${style.border}`} />
+          <p className="sr-only">{t.jurorSays}：</p>
+          <p className="relative font-serif leading-relaxed">「{output.one_line}」</p>
+        </div>
+      )}
+      <div className="space-y-1.5 text-sm leading-relaxed">
+        <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+          <Gavel className="size-3.5 text-brass" aria-hidden />
+          {t.judgeSays}
+        </p>
+        {sentences.map((sentence) => (
+          <p key={sentence}>{sentence}</p>
+        ))}
+      </div>
+      {output && (
+        <Button variant="ghost" size="sm" className="self-start" onClick={onMore}>
+          <ArrowDown aria-hidden />
+          {t.peekFull}
+        </Button>
+      )}
+    </li>
+  );
+}
+
 export function ResultView({ data }: { data: ResultData }) {
   const router = useRouter();
   const view = moduleView(data.modules);
@@ -145,6 +210,8 @@ export function ResultView({ data }: { data: ResultData }) {
   const adviceRunning = data.status === "advice_running";
   const okCount = data.jurors.filter((j) => j.status === "ok").length;
   const jurorByCode = Object.fromEntries(data.jurors.map((j) => [j.juror_code, j]));
+  const mentions = verdictMentions(verdict.verdict, data.jury, (code) => personaByCode[code]?.name ?? code);
+  const unmentioned = data.jury.filter((code) => !mentions.some((m) => m.code === code));
 
   function toggle(code: string) {
     setExpanded((current) => {
@@ -292,8 +359,55 @@ export function ResultView({ data }: { data: ResultData }) {
 
       {/* 2. 法官總評 */}
       <Section title={t.verdictTitle}>
-        <p id="anchor-verdict" className="scroll-mt-4 whitespace-pre-wrap font-serif text-[1.05rem] leading-loose">{linked(verdict.verdict, "verdict")}</p>
-        {peekPanel("verdict")}
+        {mentions.length > 0 ? (
+          <>
+            <p className="text-sm text-muted-foreground">{t.verdictBoardIntro}</p>
+            {/* 依組別排序（文學專業 → 一般讀者 → 跨界視角），組內依法官提到的順序 */}
+            <ul className="grid gap-3 md:grid-cols-2">
+              {[...mentions]
+                .sort((a, b) => GROUPS.indexOf(personaByCode[a.code]?.group) - GROUPS.indexOf(personaByCode[b.code]?.group))
+                .map((m) => (
+                  <MentionPanel key={m.code} code={m.code} sentences={m.sentences} juror={jurorByCode[m.code]} onMore={() => jumpTo(m.code, `anchor-mention-${m.code}`)} />
+                ))}
+            </ul>
+            {unmentioned.length > 0 && (
+              <div className="space-y-2">
+                <h3 className="text-sm font-medium text-muted-foreground">{t.verdictOthers}</h3>
+                <p id="anchor-verdict-others" className="flex flex-wrap gap-2">
+                  {unmentioned.map((code) => (
+                    <button
+                      key={code}
+                      type="button"
+                      onClick={() => showPeek(code, "verdict-others")}
+                      aria-expanded={peek?.code === code && peek.at === "verdict-others"}
+                      className="flex items-center gap-1.5 rounded-full border bg-card py-0.5 pl-0.5 pr-2.5 text-sm"
+                    >
+                      <PersonaIcon code={code} size="sm" dim={jurorByCode[code]?.status !== "ok"} />
+                      {personaByCode[code]?.name ?? code}
+                    </button>
+                  ))}
+                </p>
+                {peekPanel("verdict-others")}
+              </div>
+            )}
+            <details className="group rounded-lg border bg-card">
+              <summary className="flex cursor-pointer list-none items-center gap-2 p-4 text-sm font-medium">
+                <ChevronDown className="size-4 transition-transform group-open:rotate-180" aria-hidden />
+                {t.verdictFull}
+              </summary>
+              <div className="space-y-3 border-t p-4">
+                <p id="anchor-verdict" className="scroll-mt-4 whitespace-pre-wrap font-serif leading-loose">{linked(verdict.verdict, "verdict")}</p>
+                {peekPanel("verdict")}
+              </div>
+            </details>
+          </>
+        ) : (
+          // 判決書沒有點名任何人時（理論上不會發生）：照原本的方式顯示全文
+          <>
+            <p id="anchor-verdict" className="scroll-mt-4 whitespace-pre-wrap font-serif text-[1.05rem] leading-loose">{linked(verdict.verdict, "verdict")}</p>
+            {peekPanel("verdict")}
+          </>
+        )}
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="rounded-lg border bg-card p-4">
             <h3 className="mb-2 text-sm font-medium">{t.strengths}</h3>

@@ -88,3 +88,29 @@
     @apply font-sans;
   }
 }
+/* ---- 角色圖動畫 ---- */
+/* 角色入席：從下方彈上來 */
+@keyframes seat-in {
+  0% { transform: translateY(12px) scale(0.9); }
+  60% { transform: translateY(-4px) scale(1.05); }
+  100% { transform: translateY(0) scale(1); }
+}
+.animate-seat-in {
+  animation: seat-in 450ms ease-out both;
+}
+
+/* 選角畫面：選中的角色輕輕上下浮動 */
+@keyframes idle-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+.animate-idle-bob {
+  animation: idle-bob 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-seat-in,
+  .animate-idle-bob {
+    animation: none;
+  }
+}

@@ -5,7 +5,7 @@
 import { Gavel } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { PersonaIcon, personaByCode } from "@/components/persona-icon";
+import { PersonaIcon, groupStyle, personaByCode } from "@/components/persona-icon";
 import { Progress } from "@/components/ui/progress";
 import { copy } from "@/lib/copy";
 import { createClient } from "@/lib/supabase/client";
@@ -99,13 +99,16 @@ export function CourtProgress({ id, initial }: { id: string; initial: CourtProgr
       </div>
 
       {total > 0 && (
+        <div className="space-y-3 rounded-2xl border-2 border-primary/15 bg-card p-4">
+        <p className="text-sm font-medium">{t.juryTitle(total)}</p>
         <ul className="grid grid-cols-2 gap-3 sm:grid-cols-5">
           {progress.jury.map((code) => {
             const state = statusOf[code];
             const label = state === "ok" ? t.jurorOk : state === "failed" ? t.jurorFailed : t.jurorWaiting;
             return (
-              <li key={code} className="flex flex-col items-center gap-1.5 rounded-lg border bg-card p-3 text-center">
-                <PersonaIcon code={code} size="lg" dim={state !== "ok"} />
+              <li key={code} className={`flex flex-col items-center gap-1.5 rounded-xl border-2 p-3 text-center transition-colors ${state === "ok" ? `${groupStyle(code).border} ${groupStyle(code).bg}` : "border-dashed border-border bg-background"}`}>
+                {/* key 帶上狀態：完成的那一刻重新掛上，播放一次「入席」動畫 */}
+                <PersonaIcon key={`${code}-${state ?? "wait"}`} code={code} size="lg" dim={state !== "ok"} className={state === "ok" ? "animate-seat-in" : state ? "" : "animate-pulse"} />
                 <span className={`text-sm font-medium ${state === "ok" ? "" : "text-muted-foreground"}`}>
                   {personaByCode[code]?.name ?? code}
                 </span>
@@ -114,6 +117,7 @@ export function CourtProgress({ id, initial }: { id: string; initial: CourtProgr
             );
           })}
         </ul>
+        </div>
       )}
       <p className="text-sm text-muted-foreground">{t.canLeave}</p>
     </section>

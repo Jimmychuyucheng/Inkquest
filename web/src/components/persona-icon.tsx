@@ -1,44 +1,57 @@
-// 每位陪審員的職業圖示（PRD 第 7 節：代表職業的物件圖示，不使用真人照片）。
-import {
-  Armchair, Backpack, BookOpen, Briefcase, CarTaxiFront, CookingPot, Cpu, Feather, GraduationCap, Guitar, Hammer,
-  HeartHandshake, Languages, Library, Megaphone, Newspaper, PenLine, Pencil, Scale, Sprout, Stethoscope,
-  type LucideIcon,
-} from "lucide-react";
+// 每位陪審員的角色圖（像素風人物，圖檔在 public/jurors/J01.png～J20.png，產品負責人提供）。
+// 外框用組別識別色，一眼看出是哪一組。
 import { groupColor } from "@/lib/core/result";
 import { personas } from "@/lib/core/shared";
-
-const ICONS: Record<string, LucideIcon> = {
-  J01: Feather, J02: BookOpen, J03: PenLine, J04: Library, J05: GraduationCap, J06: Languages,
-  J07: Newspaper, J08: Megaphone, J09: HeartHandshake, J10: Cpu, J11: Backpack, J12: Armchair,
-  J13: Hammer, J14: Briefcase, J15: Pencil, J16: Sprout, J17: CookingPot, J18: CarTaxiFront, J19: Stethoscope, J20: Guitar,
-};
 
 export const personaByCode = Object.fromEntries(personas.map((p) => [p.code, p]));
 
 export const GROUP_STYLES = {
-  pro: { border: "border-group-pro", text: "text-group-pro", bg: "bg-group-pro/10" },
-  lay: { border: "border-group-lay", text: "text-group-lay", bg: "bg-group-lay/10" },
-  cross: { border: "border-group-cross", text: "text-group-cross", bg: "bg-group-cross/10" },
+  pro: { border: "border-group-pro", text: "text-group-pro", bg: "bg-group-pro/10", ring: "ring-group-pro" },
+  lay: { border: "border-group-lay", text: "text-group-lay", bg: "bg-group-lay/10", ring: "ring-group-lay" },
+  cross: { border: "border-group-cross", text: "text-group-cross", bg: "bg-group-cross/10", ring: "ring-group-cross" },
 } as const;
 
 export function groupStyle(code: string) {
   return GROUP_STYLES[groupColor(personaByCode[code]?.group ?? "")];
 }
 
-/** 圓形的職業圖示。dim 為 true 時顯示為灰色（尚未完成或缺席）。 */
-export function PersonaIcon({ code, dim = false, size = "md" }: { code: string; dim?: boolean; size?: "sm" | "md" | "lg" }) {
-  const Icon = ICONS[code] ?? Scale;
+export function personaImage(code: string): string {
+  return `/jurors/${code}.png`;
+}
+
+const SIZES = {
+  sm: "size-8 rounded-md border",
+  md: "size-12 rounded-lg border-2",
+  lg: "size-16 rounded-xl border-2",
+  xl: "size-28 rounded-2xl border-[3px] sm:size-36",
+} as const;
+
+/**
+ * 方形的角色頭像。dim 為 true 時顯示為灰色（尚未完成或缺席）。
+ * 旁邊一定會寫出職業名稱，所以圖片本身當作裝飾（alt 留空），螢幕閱讀器不會重複唸。
+ */
+export function PersonaIcon({
+  code,
+  dim = false,
+  size = "md",
+  className = "",
+}: {
+  code: string;
+  dim?: boolean;
+  size?: keyof typeof SIZES;
+  className?: string;
+}) {
   const style = groupStyle(code);
-  const box = size === "lg" ? "size-14" : size === "sm" ? "size-8" : "size-10";
-  const icon = size === "lg" ? "size-7" : size === "sm" ? "size-4" : "size-5";
   return (
     <span
       aria-hidden
-      className={`flex ${box} shrink-0 items-center justify-center rounded-full border-2 transition-colors duration-500 ${
-        dim ? "border-border bg-muted text-muted-foreground/50" : `${style.border} ${style.bg} ${style.text}`
-      }`}
+      className={`relative block shrink-0 overflow-hidden transition-[filter,opacity,border-color] duration-500 ${SIZES[size]} ${
+        dim ? "border-border bg-muted opacity-50 grayscale" : `${style.border} ${style.bg}`
+      } ${className}`}
     >
-      <Icon className={icon} />
+      {/* 不用 next/image：圖檔很小（每張約 5KB），不需要另外最佳化 */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={personaImage(code)} alt="" width={390} height={390} loading="lazy" decoding="async" className="size-full object-contain" />
     </span>
   );
 }

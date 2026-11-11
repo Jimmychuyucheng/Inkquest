@@ -1,11 +1,10 @@
 import { Gavel } from "lucide-react";
 import Link from "next/link";
-import { PersonaIcon } from "@/components/persona-icon";
+import { JurySelect } from "@/components/jury-select";
 import { buttonVariants } from "@/components/ui/button";
 import { LoginButton } from "@/components/login-button";
 import { getCurrentUser } from "@/lib/auth";
 import { copy } from "@/lib/copy";
-import { GROUPS, personas } from "@/lib/core/shared";
 import { supabaseConfigured } from "@/lib/env";
 
 export default async function HomePage({
@@ -45,24 +44,25 @@ export default async function HomePage({
         )}
       </section>
 
-      <section className="space-y-5">
-        <h2 className="font-heading text-2xl font-semibold">{copy.home.juryTitle}</h2>
-        <p className="text-muted-foreground">{copy.home.juryIntro}</p>
-        {GROUPS.map((group) => (
-          <div key={group} className="space-y-3">
-            <h3 className="text-sm font-medium text-muted-foreground">{group}</h3>
-            <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {personas
-                .filter((p) => p.group === group)
-                .map((p) => (
-                  <li key={p.code} className="flex items-center gap-3 rounded-lg border bg-card p-3">
-                    <PersonaIcon code={p.code} />
-                    <span className="text-sm font-medium">{p.name}</span>
-                  </li>
-                ))}
-            </ul>
-          </div>
-        ))}
+      <figure className="space-y-2">
+        {/* 全員圖：20 位角色依三組站在一起 */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/jurors/all.png"
+          alt={copy.home.allAlt}
+          width={1920}
+          height={1080}
+          className="w-full rounded-xl border-2 border-primary/15"
+        />
+        <figcaption className="text-center text-sm text-muted-foreground">{copy.home.juryIntro}</figcaption>
+      </figure>
+
+      <section className="space-y-4" aria-labelledby="jury-title">
+        <div className="space-y-1">
+          <h2 id="jury-title" className="font-heading text-2xl font-semibold">{copy.home.selectTitle}</h2>
+          <p className="text-muted-foreground">{copy.home.selectIntro}</p>
+        </div>
+        <JurySelect />
       </section>
     </div>
   );
