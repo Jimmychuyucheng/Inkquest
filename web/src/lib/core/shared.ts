@@ -78,6 +78,7 @@ export interface Settings {
     budget_warn_ratio: number;
     modules: string[];
     default_modules: string[];
+    verdict_board_by_group: Record<string, number>;
   };
 }
 

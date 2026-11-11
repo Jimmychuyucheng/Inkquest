@@ -155,3 +155,8 @@ web:
   # 回饋模組（B-5）；第一個是預設勾選
   modules: [verdict, jurors, scores, advice]
   default_modules: [verdict]
+  # 結果頁「法官總評」看板每組放幾位陪審員（優先放法官點名的人，不夠再補同組其他人）
+  verdict_board_by_group:
+    文學專業: 2
+    一般讀者: 1
+    跨界視角: 1

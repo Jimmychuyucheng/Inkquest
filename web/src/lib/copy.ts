@@ -101,11 +101,18 @@ export const copy = {
     wellbeing:
       "讀完這篇文章，我們有點掛念你。如果你現在正經歷一段難熬的時間，可以撥打安心專線 1925（24 小時、免付費），有人願意聽你說。",
     verdictTitle: "法官總評",
-    verdictBoardIntro: "法官點名的陪審員，以及法官怎麼轉述他們的意見。",
+    verdictConclusion: "法官結論",
+    votesTitle: "陪審團投票",
+    votesSummary: (yes: number, no: number, absent: number) =>
+      `支持 ${yes} 位・不支持 ${no} 位${absent > 0 ? `・缺席 ${absent} 位` : ""}`,
+    voteDot: (name: string, score: number | null, support: boolean | null) =>
+      support === null ? `${name}：本次缺席` : `${name}：${score} 分，${support ? "支持得獎" : "不支持得獎"}`,
+    verdictBoardIntro: (parts: string) => `代表陪審員：${parts}。`,
+    boardPart: (group: string, n: number) => `${group} ${n} 位`,
+    notMentioned: "法官這次沒有點名他，上面是他本人的看法。",
     judgeSays: "法官轉述",
     jurorSays: "本人的一句話",
-    verdictOthers: "這次沒有被法官點名的陪審員",
-    verdictFull: "看判決書全文",
+    verdictOthers: "其他陪審員",
     scoreUnit: (n: number) => `${n} 分`,
     minorityTitle: "少數意見書",
     minorityJurors: "持少數意見",

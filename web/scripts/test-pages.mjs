@@ -85,10 +85,13 @@ try {
   let missing = has(html, "頁面測試", "法官總評", "少數意見書", "最大分歧", "查看所有職業意見", "也想看", "複製法官總評", "再投一篇", "本回饋由 AI 模擬不同讀者產生");
   check("只勾法官總評：顯示判決、少數意見、補勾按鈕、複製與免責聲明", missing.length === 0, `缺少：${missing.join("、")}`);
   check("沒勾的模組不顯示（分數、修改建議）", !html.includes("分數分布") && !html.includes("修改方向"));
-  missing = has(html, "法官轉述", "看判決書全文", "/jurors/");
-  check("法官總評以看板呈現：角色圖、法官轉述，全文收在「看判決書全文」", missing.length === 0, `缺少：${missing.join("、")}`);
+  missing = has(html, "法官結論", "陪審團投票", "法官轉述", "/jurors/");
+  check("法官總評：結論直接顯示、投票點狀圖、看板有角色圖與法官轉述", missing.length === 0, `缺少：${missing.join("、")}`);
+  check("判決書全文不再收合", !html.includes("<details") && !html.includes("看判決書全文"));
+  const dots = html.match(/data-vote="(yes|no|absent)"/g) ?? [];
+  check("點狀圖有 10 個點，每位陪審員一個", dots.length === 10, `找到 ${dots.length} 個`);
   const panels = html.match(/id="anchor-mention-J\d{2}"/g) ?? [];
-  check("看板列出法官點名的陪審員（假資料點名 3 組各 1 位）", panels.length === 3, `找到 ${panels.length} 格`);
+  check("看板固定 4 位（文學專業 2、一般讀者 1、跨界視角 1；假資料偶爾有人缺席時可能少 1 格）", panels.length === 4 || (panels.length === 3 && html.includes("本次缺席")), `找到 ${panels.length} 格`);
   check("別人看不到這篇（未登入導回首頁）", (await fetch(`${SITE}/result/${id}`, { redirect: "manual" })).status >= 300);
 
   console.log("補勾模組");

@@ -239,3 +239,32 @@ export function verdictMentions(text: string, juryCodes: readonly string[], name
   }
   return [...byCode].map(([code, sentences]) => ({ code, sentences }));
 }
+
+export interface BoardPick {
+  code: string;
+  /** 法官提到他的句子；補位的人（法官沒點名）為空陣列。 */
+  sentences: string[];
+}
+
+/**
+ * 總評看板要放哪幾位：依 quota 的組別順序，每組先放法官點名的人（依點名順序），
+ * 不夠再補同組其他成功評閱的陪審員。
+ */
+export function verdictBoard(
+  mentions: readonly VerdictMention[],
+  juryCodes: readonly string[],
+  groupOf: (code: string) => string | undefined,
+  quota: Readonly<Record<string, number>>,
+  isOk: (code: string) => boolean,
+): BoardPick[] {
+  const picks: BoardPick[] = [];
+  for (const [group, size] of Object.entries(quota)) {
+    const mentioned = mentions.filter((m) => groupOf(m.code) === group).slice(0, size);
+    picks.push(...mentioned.map((m) => ({ code: m.code, sentences: m.sentences })));
+    const fill = juryCodes
+      .filter((code) => groupOf(code) === group && isOk(code) && !mentioned.some((m) => m.code === code))
+      .slice(0, size - mentioned.length);
+    picks.push(...fill.map((code) => ({ code, sentences: [] })));
+  }
+  return picks;
+}

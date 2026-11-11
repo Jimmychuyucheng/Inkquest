@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatDateTime, formatRatio, formatScore, groupColor, moduleView, splitByJurorCodes, verdictCopyText, readableSentence, splitSentences, verdictMentions } from "./result";
+import { formatDateTime, formatRatio, formatScore, groupColor, moduleView, splitByJurorCodes, verdictCopyText, readableSentence, splitSentences, verdictBoard, verdictMentions } from "./result";
 
 describe("模組顯示規則", () => {
   it("只勾法官總評：其他不顯示，三個都可以補勾", () => {
@@ -166,6 +166,33 @@ describe("判決書提到的陪審員", () => {
   it("分號後面沒有編號的子句接在前一位後面", () => {
     const mentions = verdictMentions("J02認為動作很有重量；但也覺得結尾稍快。", jury, nameOf);
     expect(mentions).toEqual([{ code: "J02", sentences: ["小說家認為動作很有重量；但也覺得結尾稍快。"] }]);
+  });
+
+  describe("總評看板的人選（文學專業 2、一般讀者 1、跨界視角 1）", () => {
+    const groups: Record<string, string> = {
+      J02: "文學專業", J05: "文學專業", J07: "一般讀者", J09: "一般讀者", J11: "一般讀者",
+      J13: "跨界視角", J14: "跨界視角", J16: "跨界視角", J19: "跨界視角", J20: "跨界視角",
+    };
+    const quota = { 文學專業: 2, 一般讀者: 1, 跨界視角: 1 };
+    const groupOf = (code: string) => groups[code];
+
+    it("每組先放法官點名的人，不夠再補同組其他人（真實判決書）", () => {
+      const board = verdictBoard(verdictMentions(essay1, jury, nameOf), jury, groupOf, quota, () => true);
+      expect(board.map((b) => b.code)).toEqual(["J02", "J05", "J07", "J14"]);
+      expect(board[1].sentences).toEqual([]); // J05 沒被點名，是補位
+      expect(board[3].sentences[0]).toContain("中小企業老闆");
+    });
+
+    it("點名人數超過名額時，依點名順序取前面的", () => {
+      const mentions = verdictMentions("J19說好。J14說不好。J13也說好。", jury, nameOf);
+      const board = verdictBoard(mentions, jury, groupOf, quota, () => true);
+      expect(board.filter((b) => groups[b.code] === "跨界視角").map((b) => b.code)).toEqual(["J19"]);
+    });
+
+    it("補位不放缺席的陪審員；整組都缺席時那組就少放", () => {
+      const board = verdictBoard([], jury, groupOf, quota, (code) => code !== "J02");
+      expect(board.map((b) => b.code)).toEqual(["J05", "J07", "J13"]);
+    });
   });
 
   it("引號裡的分號不切", () => {

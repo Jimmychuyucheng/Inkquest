@@ -109,6 +109,7 @@ class WebConfig(_Strict):
     budget_warn_ratio: float = Field(gt=0, le=1)
     modules: list[str] = Field(min_length=1)
     default_modules: list[str] = Field(min_length=1)
+    verdict_board_by_group: dict[str, int]
 
 
 class Settings(_Strict):
