@@ -444,7 +444,7 @@ Haiku 70 次、Sonnet 5 次、注入補測 10 次，合計約 US$0.31。專案�
 - [x] Supabase 已執行 0001～0006；正式網址加進 Authentication → URL Configuration
 - [x] Google OAuth：正式網址加進 Authorized JavaScript origins
 - [x] Claude Console：為本專案的 workspace 設定用量上限（網站月警戒線之外的第二道防線）
-- [ ] Vercel 的 Function Region 改成和 Supabase 同一區（見下方「網頁速度」）
+- [x] Vercel 的 Function Region 改成和 Supabase 同一區：Supabase 在 ap-northeast-1（東京），Vercel 改為 hnd1（2026-11-12）
 
 ## 2026-11-12 W5 部署上線與第一次真實投稿評估
 
@@ -472,6 +472,17 @@ Haiku 70 次、Sonnet 5 次、注入補測 10 次，合計約 US$0.31。專案�
   - 角色圖已在 CDN 快取，每張約 0.2 秒。
   - 伺服器回應約 0.5 秒，偏慢。原因是 Vercel 函式跑在美國東岸（回應標頭 `iad1`），而從台灣連 Supabase 只要 70～90 毫秒，資料庫應該在亞洲。伺服器每查一次資料庫都要橫跨太平洋，結果頁這類要依序查好幾次的頁面，每次會多等約半秒到一秒。
   - 修法只改設定、不改程式：Supabase → Project Settings → General 看 Region，再到 Vercel → Settings → Functions → Function Region 選同一區，然後 Redeploy。Inngest 網址不變，不需重新同步。改完要再量一次做比較。
+- 改區域後重測（2026-11-12，本人把 Function Region 改成東京 hnd1 並重新部署）：
+  - 回應標頭從 `hkg1::iad1` 變成 `hkg1::hnd1`，確認函式已在東京執行。`/api/inngest` 仍拒絕沒有簽章的請求，背景工作設定不受影響。
+
+    | 項目 | 改前（iad1） | 改後（hnd1） |
+    | --- | --- | --- |
+    | 首頁伺服器回應（curl） | 0.46～0.72 秒 | 剛部署完的前幾次 0.56～0.60 秒，之後 0.31～0.34 秒 |
+    | 未登入 `/history`（要查登入狀態） | 0.54 秒 | 0.31～0.36 秒 |
+    | 首頁主要內容出現（Chrome） | 0.85 秒 | 0.73 秒；模擬 4G 0.56 秒 |
+    | 首頁完整載入 | 0.83～1.03 秒 | 0.67～0.72 秒 |
+
+  - 登入後的頁面（結果頁、歷史紀錄）每次要查好幾次資料庫，改善應該比首頁明顯。Claude 無法用 Google 登入，請本人在瀏覽器確認。
 - 遇到的問題與解法：
   - 寫在 shell heredoc 裡的分析腳本被安全檢查擋下（誤判成刪除指令）→ 改用檔案寫好再執行。
 - AI 寫錯、我修正的地方：本階段沒有。
