@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     let query = admin
       .from("submissions")
       .select(
-        "user_id, genre, char_count, modules, status, jurors_ok, stats, created_at, finished_at, " +
+        "user_id, genre, char_count, modules, status, jurors_ok, jury_mode, stats, created_at, finished_at, " +
           "profiles!inner(research_consent), juror_results(juror_code, status, score:output->score)",
       )
       .order("created_at")

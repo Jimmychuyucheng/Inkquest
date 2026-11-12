@@ -3,7 +3,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { drawJury } from "./jury";
+import { drawJury, juryMode, validatePicks } from "./jury";
 import { GROUPS, personas, settings } from "./shared";
 import { computeStats, roundHalfUp, type JurorScore } from "./stats";
 import { checkSubmission, countChars, countLines } from "./text";
@@ -75,6 +75,44 @@ describe("陪審團抽選（與 Python 一致）", () => {
     const first = drawJury("abc", personas, settings.jury).map((p) => p.code);
     expect(drawJury("abc", [...personas].reverse(), settings.jury).map((p) => p.code)).toEqual(first);
     expect(new Set(first.map((code) => groupOf[code])).size).toBe(3);
+  });
+});
+
+describe("自己選陪審員", () => {
+  const size = settings.jury.size_by_group;
+  const countBy = (codes: string[]) => Object.fromEntries(GROUPS.map((g) => [g, codes.filter((c) => groupOf[c] === g).length]));
+
+  it("選的人一定在陪審團裡，其餘依原本規則補滿，每組人數不變", () => {
+    const picks = ["J01", "J07", "J22"];
+    const codes = drawJury("abc", personas, settings.jury, picks).map((p) => p.code);
+    for (const code of picks) expect(codes).toContain(code);
+    expect(countBy(codes)).toEqual(size);
+  });
+
+  it("每組都選滿時，陪審團就是選的那些人", () => {
+    const picks = ["J01", "J02", "J03", "J07", "J08", "J09", "J21", "J22", "J23", "J13"];
+    expect(drawJury("abc", personas, settings.jury, picks).map((p) => p.code).sort()).toEqual([...picks].sort());
+  });
+
+  it("沒有選人時與原本的隨機抽選相同", () => {
+    expect(drawJury("abc", personas, settings.jury, []).map((p) => p.code)).toEqual(drawJury("abc", personas, settings.jury).map((p) => p.code));
+  });
+
+  it("組成方式：沒選是 random、選滿是 chosen、選一部分是 mixed", () => {
+    expect(juryMode([], settings.jury)).toBe("random");
+    expect(juryMode(["J01"], settings.jury)).toBe("mixed");
+    expect(juryMode(["J01", "J02", "J03", "J07", "J08", "J09", "J21", "J22", "J23", "J13"], settings.jury)).toBe("chosen");
+  });
+
+  it("檢查選人：不提供表示隨機；不存在、重複、停用、超過該組名額都拒絕", () => {
+    expect(validatePicks(undefined, personas, settings.jury)).toEqual({ ok: true, picks: [] });
+    expect(validatePicks(["J01", "J21"], personas, settings.jury)).toEqual({ ok: true, picks: ["J01", "J21"] });
+    expect(validatePicks("J01", personas, settings.jury).ok).toBe(false);
+    expect(validatePicks(["J99"], personas, settings.jury).ok).toBe(false);
+    expect(validatePicks(["J01", "J01"], personas, settings.jury).ok).toBe(false);
+    expect(validatePicks(["J01", "J02", "J03", "J04"], personas, settings.jury).ok).toBe(false); // 文學專業只能 3 位
+    const disabled = personas.map((p) => ({ ...p, enabled: p.code !== "J01" }));
+    expect(validatePicks(["J01"], disabled, settings.jury).ok).toBe(false);
   });
 });
 

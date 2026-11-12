@@ -240,6 +240,16 @@ describe("完整開庭流程", () => {
     expect([count("文學專業"), count("一般讀者"), count("跨界視角")]).toEqual([3, 3, 4]);
   });
 
+  it("投稿時已指定陪審團（自己選人）：沿用指定的人，不重抽", async () => {
+    const { state, deps, calls } = setup();
+    const preset = ["J01", "J02", "J03", "J07", "J08", "J09", "J13", "J21", "J22", "J23"];
+    state.submission!.jury = preset;
+    await runCourt(ID, deps);
+    expect(state.submission?.jury).toEqual(preset);
+    expect(calls("juror").map((r) => r.meta.juror_code).sort()).toEqual([...preset].sort());
+    expect(state.submission?.status).toBe("done");
+  });
+
   it("勾選修改建議時多 1 次呼叫（共 12 次），引句都來自原文", async () => {
     const { state, deps, provider, calls } = setup({}, ["verdict", "advice"]);
     await runCourt(ID, deps);

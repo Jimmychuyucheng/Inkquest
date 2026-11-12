@@ -49,7 +49,6 @@ export default async function HomePage({
         {/* 全員圖：寬螢幕用橫的、手機用方的（原圖是重複圖樣，裁短不影響內容） */}
         <picture>
           <source media="(max-width: 639px)" srcSet="/jurors/all-mobile.png" width={1080} height={1080} />
-          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/jurors/all-desktop.png"
             alt={copy.home.allAlt}

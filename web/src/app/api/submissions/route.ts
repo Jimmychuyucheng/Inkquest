@@ -5,8 +5,9 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getBudgetStatus } from "@/lib/admin-server";
 import { getCurrentUser } from "@/lib/auth";
 import { copy } from "@/lib/copy";
+import { drawJury, juryMode, validatePicks } from "@/lib/core/jury";
 import { rejectMessage, validateSubmission } from "@/lib/core/quota";
-import { settings } from "@/lib/core/shared";
+import { personas, settings } from "@/lib/core/shared";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { COURT_EVENT, inngest } from "@/inngest/client";
 
@@ -29,6 +30,9 @@ export async function POST(request: NextRequest) {
   const validated = validateSubmission(body, settings);
   if (!validated.ok) return NextResponse.json({ message: validated.message }, { status: 400 });
   const { genre, title, content, modules, charCount } = validated.value;
+  // 自己選的陪審員（可選）：不合規則就整筆拒絕，不扣次數
+  const picked = validatePicks(body?.jury, personas, settings.jury);
+  if (!picked.ok) return NextResponse.json({ message: copy.submit.invalidJury }, { status: 400 });
 
   // 3. 月費用警戒線（PRD 第 10 節）：本月估算費用達上限就暫停收件
   try {
@@ -62,7 +66,24 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // 5. 交給背景工作佇列；陪審員與法官在背景執行，這個請求立刻回應
+  // 5. 自己選人時：補滿名額後寫進投稿，背景工作就不會重抽
+  if (picked.picks.length > 0) {
+    const jury = drawJury(data.id, personas, settings.jury, picked.picks).map((p) => p.code);
+    const { error: juryError } = await admin
+      .from("submissions")
+      .update({ jury, jury_mode: juryMode(picked.picks, settings.jury) })
+      .eq("id", data.id);
+    if (juryError) {
+      console.error("寫入指定陪審團失敗", juryError.code);
+      await admin
+        .from("submissions")
+        .update({ status: "failed", error: "internal", finished_at: new Date().toISOString() })
+        .eq("id", data.id);
+      return NextResponse.json({ message: copy.errors.generic }, { status: 500 });
+    }
+  }
+
+  // 6. 交給背景工作佇列；陪審員與法官在背景執行，這個請求立刻回應
   try {
     await inngest.send({ name: COURT_EVENT, data: { submissionId: data.id } });
   } catch (sendError) {

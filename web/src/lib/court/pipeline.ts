@@ -79,9 +79,11 @@ export async function failCourt(id: string, code: FailureCode, deps: Pick<CourtD
 export async function startCourt(id: string, deps: CourtDeps): Promise<PhaseResult> {
   const submission = await loadActive(id, deps);
   if (!submission) return stop("投稿不存在或已結束");
-  const jury = drawJury(id, deps.personas, deps.settings.jury).map((p) => p.code);
+  // 使用者自己選人時，投稿 API 已經把完整的陪審團寫進去了；否則在這裡隨機抽選
+  const preset = submission.jury.length > 0;
+  const jury = preset ? submission.jury : drawJury(id, deps.personas, deps.settings.jury).map((p) => p.code);
   await deps.store.updateSubmission(id, { status: "jurors_running", jury });
-  return go(`抽出 ${jury.length} 位陪審員`);
+  return go(preset ? `使用指定的 ${jury.length} 位陪審員` : `抽出 ${jury.length} 位陪審員`);
 }
 
 /** 同時最多執行 limit 個工作。 */

@@ -126,6 +126,7 @@ describe("匯出投稿統計 CSV", () => {
     modules: ["verdict", "scores"],
     status: "done",
     jurors_ok: 9,
+    jury_mode: "mixed",
     stats: { mean_score: 6.7, support_ratio: 0.6, group_means: { 文學專業: 6.3, 一般讀者: 7, 跨界視角: null }, controversy: "高" },
     created_at: "2026-11-11T05:03:04Z",
     finished_at: "2026-11-11T05:03:50Z",
@@ -147,7 +148,7 @@ describe("匯出投稿統計 CSV", () => {
     const [header] = parse(csv);
     expect(header).toEqual(EXPORT_COLUMNS);
     expect(header.filter((h) => /^J\d{2}$/.test(h))).toHaveLength(personas.length);
-    for (const name of ["user_code", "genre", "char_count", "modules", "status", "jurors_ok", "mean_score", "support_ratio", "controversy", "created_at", "finished_at", "research_consent"]) {
+    for (const name of ["user_code", "genre", "char_count", "modules", "status", "jurors_ok", "jury_mode", "mean_score", "support_ratio", "controversy", "created_at", "finished_at", "research_consent"]) {
       expect(header).toContain(name);
     }
   });
@@ -158,6 +159,7 @@ describe("匯出投稿統計 CSV", () => {
     expect(get("genre")).toBe("散文");
     expect(get("char_count")).toBe("1520");
     expect(get("modules")).toBe("verdict|scores");
+    expect(get("jury_mode")).toBe("mixed");
     expect(get("mean_score")).toBe("6.7");
     expect(get("support_ratio")).toBe("0.6");
     expect(get("group_mean_文學專業")).toBe("6.3");

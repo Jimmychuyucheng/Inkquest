@@ -17,6 +17,8 @@ export interface ExportSubmission {
   modules: string[];
   status: string;
   jurors_ok: number;
+  /** random：隨機抽選；chosen：使用者每組都自己選；mixed：選一部分、其餘隨機補滿 */
+  jury_mode: string;
   stats: {
     mean_score?: number;
     support_ratio?: number;
@@ -38,6 +40,7 @@ export const EXPORT_COLUMNS = [
   "modules",
   "status",
   "jurors_ok",
+  "jury_mode",
   "mean_score",
   "support_ratio",
   ...GROUPS.map((g) => `group_mean_${g}`),
@@ -92,6 +95,7 @@ export function exportRow(s: ExportSubmission, timeZone: string, salt: string): 
     s.modules.join("|"),
     s.status,
     s.jurors_ok,
+    s.jury_mode,
     stats.mean_score,
     stats.support_ratio,
     ...GROUPS.map((g) => stats.group_means?.[g]),

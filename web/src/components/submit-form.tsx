@@ -1,8 +1,9 @@
 "use client";
-// 投稿頁（PRD 第 7 節）：文類、標題、內文（即時字數）、回饋模組、剩餘次數、送出。
+// 投稿頁（PRD 第 7 節）：文類、標題、內文（即時字數）、回饋模組、陪審團（隨機或自己選）、剩餘次數、送出。
 // 這裡的檢查只是為了即時提示；伺服器會全部再檢查一次。
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { JuryPicker, type JuryChoice } from "@/components/jury-picker";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -34,6 +35,8 @@ export function SubmitForm({ remaining, limit }: { remaining: number; limit: num
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [modules, setModules] = useState<string[]>(settings.web.default_modules);
+  const [juryChoice, setJuryChoice] = useState<JuryChoice>("random");
+  const [picks, setPicks] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
 
@@ -71,7 +74,7 @@ export function SubmitForm({ remaining, limit }: { remaining: number; limit: num
       const response = await fetch("/api/submissions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ genre, title, content, modules }),
+        body: JSON.stringify({ genre, title, content, modules, jury: juryChoice === "choose" ? picks : undefined }),
       });
       const data = await response.json().catch(() => ({}));
       if (response.ok && typeof data.id === "string") {
@@ -135,6 +138,8 @@ export function SubmitForm({ remaining, limit }: { remaining: number; limit: num
         ))}
         {modules.length === 0 && <p className="text-sm text-destructive">{t.needModule}</p>}
       </fieldset>
+
+      <JuryPicker choice={juryChoice} onChoice={setJuryChoice} picks={picks} onPicks={setPicks} />
 
       <div className="flex flex-wrap items-center gap-4">
         <Button type="submit" size="lg" disabled={!canSend}>{busy ? t.sending : t.send}</Button>
