@@ -28,9 +28,12 @@ export interface ResultData {
 
 const t = copy.result;
 
-function Section({ title, children, id }: { title: string; children: React.ReactNode; id?: string }) {
+function Section({ title, children, id, flash = false }: { title: string; children: React.ReactNode; id?: string; flash?: boolean }) {
   return (
-    <section id={id} className="space-y-4">
+    <section
+      id={id}
+      className={`scroll-mt-4 space-y-4 rounded-xl transition-shadow duration-700 ${flash ? "ring-2 ring-brass ring-offset-4 ring-offset-background" : "ring-0"}`}
+    >
       <h2 className="border-b border-brass/40 pb-2 font-heading text-xl font-semibold">{title}</h2>
       {children}
     </section>
@@ -271,6 +274,9 @@ export function ResultView({ data }: { data: ResultData }) {
   const view = moduleView(data.modules);
   const { verdict, stats } = data;
   const [jurorsOpen, setJurorsOpen] = useState(view.jurorsOpen);
+  // 從頁尾「也想看」補勾後：等新的區塊出現就捲過去，並暫時標亮，讓使用者知道內容在哪裡
+  const pendingModule = useRef<ModuleName | null>(null);
+  const [flashModule, setFlashModule] = useState<ModuleName | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [adding, setAdding] = useState<ModuleName | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -328,6 +334,26 @@ export function ResultView({ data }: { data: ResultData }) {
     document.getElementById(`juror-${code}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [highlight, jurorsOpen, expanded]);
 
+  // 重新整理後新的區塊才會出現，所以等 data.modules 包含它時再捲動
+  useEffect(() => {
+    const name = pendingModule.current;
+    if (!name || !data.modules.includes(name)) return;
+    const target = document.getElementById(`section-${name}`);
+    if (!target) return;
+    pendingModule.current = null;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    target.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+    const timer = window.setTimeout(() => setFlashModule(name), 0);
+    return () => window.clearTimeout(timer);
+  }, [data.modules, jurorsOpen]);
+
+  // 標亮 2.5 秒後自動取消
+  useEffect(() => {
+    if (!flashModule) return;
+    const timer = window.setTimeout(() => setFlashModule(null), 2500);
+    return () => window.clearTimeout(timer);
+  }, [flashModule]);
+
   async function addModule(name: ModuleName) {
     setAdding(name);
     setNotice(null);
@@ -339,7 +365,11 @@ export function ResultView({ data }: { data: ResultData }) {
       });
       const body = await response.json().catch(() => ({}));
       if (!response.ok) setNotice(body.message ?? copy.errors.generic);
-      else router.refresh();
+      else {
+        if (name === "jurors") setJurorsOpen(true);
+        pendingModule.current = name;
+        router.refresh();
+      }
     } catch {
       setNotice(copy.submit.networkError);
     } finally {
@@ -529,7 +559,7 @@ export function ResultView({ data }: { data: ResultData }) {
 
       {/* 4. 分數與得獎潛力 */}
       {view.scores && stats && (
-        <Section title={t.scoresTitle}>
+        <Section title={t.scoresTitle} id="section-scores" flash={flashModule === "scores"}>
           <div className="grid gap-6 sm:grid-cols-2">
             <div>
               <h3 className="mb-2 text-sm font-medium">{t.distribution}</h3>
@@ -576,7 +606,7 @@ export function ResultView({ data }: { data: ResultData }) {
 
       {/* 5. 具體修改建議 */}
       {view.advice && (
-        <Section title={t.adviceTitle}>
+        <Section title={t.adviceTitle} id="section-advice" flash={flashModule === "advice"}>
           {data.advice ? (
             <ol className="space-y-4">
               {data.advice.suggestions.map((item, index) => (
@@ -611,7 +641,7 @@ export function ResultView({ data }: { data: ResultData }) {
       )}
 
       {/* 6. 查看所有職業意見 */}
-      <Section title={t.jurorsTitle} id="jurors">
+      <Section title={t.jurorsTitle} id="section-jurors" flash={flashModule === "jurors"}>
         <Button variant="outline" onClick={() => setJurorsOpen((open) => !open)} aria-expanded={jurorsOpen}>
           {jurorsOpen ? t.hideJurors : t.showJurors}
         </Button>
