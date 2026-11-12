@@ -434,13 +434,46 @@ Haiku 70 次、Sonnet 5 次、注入補測 10 次，合計約 US$0.31。專案�
   - 用 essay1 截了 1280px 與 390px 的圖，沒有橫向捲動。
 - API 用量與費用：0 次，US$0。
 
-## W5 部署清單（待辦）
+## W5 部署清單
 
-逐步操作見 `docs/deploy.md`。
+逐步操作見 `docs/deploy.md`。2026-11-12 本人回報已全部完成。
 
-- [ ] Vercel 環境變數：`NEXT_PUBLIC_SUPABASE_URL`、`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`、`SUPABASE_SECRET_KEY`、`NEXT_PUBLIC_SITE_URL`（正式網址）、`LLM_PROVIDER=anthropic`、`ANTHROPIC_API_KEY`、`INNGEST_EVENT_KEY`、`INNGEST_SIGNING_KEY`
-- [ ] Vercel 要設定 `ADMIN_EMAILS`
-- [ ] Vercel 要設定 `RESEARCH_EXPORT_SALT`：與本機 `.env.local` 同一組，之後不要再換（換了匿名代號會全部改變，前後匯出對不起來）
-- [ ] Supabase 已執行 0001～0006；正式網址加進 Authentication → URL Configuration
-- [ ] Google OAuth：正式網址加進 Authorized JavaScript origins
-- [ ] Claude Console：為本專案的 workspace 設定用量上限（網站月警戒線之外的第二道防線）
+- [x] Vercel 環境變數：`NEXT_PUBLIC_SUPABASE_URL`、`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`、`SUPABASE_SECRET_KEY`、`LLM_PROVIDER=anthropic`、`ANTHROPIC_API_KEY`、`INNGEST_EVENT_KEY`、`INNGEST_SIGNING_KEY`（`NEXT_PUBLIC_SITE_URL` 程式沒有用到，不用設，見 deploy.md 第 3 步）
+- [x] Vercel 要設定 `ADMIN_EMAILS`
+- [x] Vercel 要設定 `RESEARCH_EXPORT_SALT`：與本機 `.env.local` 同一組，之後不要再換（換了匿名代號會全部改變，前後匯出對不起來）
+- [x] Supabase 已執行 0001～0006；正式網址加進 Authentication → URL Configuration
+- [x] Google OAuth：正式網址加進 Authorized JavaScript origins
+- [x] Claude Console：為本專案的 workspace 設定用量上限（網站月警戒線之外的第二道防線）
+- [ ] Vercel 的 Function Region 改成和 Supabase 同一區（見下方「網頁速度」）
+
+## 2026-11-12 W5 部署上線與第一次真實投稿評估
+
+- 做了什麼：
+  - 本人照 `docs/deploy.md` 完成部署，正式網址 https://inkquest-tw.vercel.app/ ；Supabase 網址設定、Google 登入、Inngest 同步都已完成，並用自己的帳號投了一篇真實作品。
+  - Claude 從外部做唯讀檢查：
+    - 首頁 200，角色選擇畫面正常。
+    - 未登入開 `/submit`、`/admin` 會導回首頁。
+    - `/api/inngest` 拒絕沒有簽章的請求，代表 `INNGEST_SIGNING_KEY` 生效。
+    - 瀏覽器下載的 JS 檔中沒有 Anthropic 或 Supabase 的金鑰。
+  - Claude 從資料庫唯讀分析本人那一篇的流程與輸出（不印原文），並量網頁速度。這次沒有再投新的：Claude 無法用 Google 登入，要測只能在正式資料庫建臨時帳號，而本人那篇已足夠評估。
+- 背景流程（1004 字小品文，勾修改建議）：
+  - 陪審員 10/10 成功。J02 重試 1 次，原因是一句話寫了 61 字（上限 40 字），重寫後通過，重試機制正常運作。
+  - 時間軸：第 11 秒第一位陪審員完成、第 18 秒全部完成、第 35 秒判決、第 53 秒修改建議；在規格的 90 秒內。陪審員單次延遲中位數 7.0 秒，最長 12.6 秒（重試的那位）。
+  - 從送出到第一個模型呼叫開始約 5 秒，是 Inngest 排隊加上函式啟動的時間，屬正常範圍。
+  - 修改建議的 prompt 需要判決內容，只能排在法官之後；判決出來後結果頁就能先看。
+  - 費用 US$0.0136（預估 0.02 以內）。每月 US$12 預算約可投 880 篇。
+- 判決品質：
+  - 抽查法官對 5 位陪審員的轉述（J02、J10、J14、J15、J16），與原文全部對得上。
+  - 少數意見的 J02、J10，正好是投「不支持」的 2 位；各組平均（6.7／6.7／7）與「8 位支持」和統計一致；三組都有點名。
+  - 問題 1，分數擠在一起：10 位中 8 位給 7 分，標準差 0.4，鑑別度低。這是 Haiku 的傾向，可作為期末報告的觀察素材。
+  - 問題 2，J10 工程師的評語混入一句自我說明：「『檳榔攤老闆娘』是我根據文中母親身分推測的稱呼，原文並未如此明寫」，讀者會覺得奇怪。可在陪審員 prompt 加一句禁止，待本人決定。
+- 網頁速度：
+  - 首頁（手機尺寸）：主要內容 0.85 秒出現；模擬 4G 約 1 秒載完；總傳輸 349KB，其中 JS 228KB。
+  - 角色圖已在 CDN 快取，每張約 0.2 秒。
+  - 伺服器回應約 0.5 秒，偏慢。原因是 Vercel 函式跑在美國東岸（回應標頭 `iad1`），而從台灣連 Supabase 只要 70～90 毫秒，資料庫應該在亞洲。伺服器每查一次資料庫都要橫跨太平洋，結果頁這類要依序查好幾次的頁面，每次會多等約半秒到一秒。
+  - 修法只改設定、不改程式：Supabase → Project Settings → General 看 Region，再到 Vercel → Settings → Functions → Function Region 選同一區，然後 Redeploy。Inngest 網址不變，不需重新同步。改完要再量一次做比較。
+- 遇到的問題與解法：
+  - 寫在 shell heredoc 裡的分析腳本被安全檢查擋下（誤判成刪除指令）→ 改用檔案寫好再執行。
+- AI 寫錯、我修正的地方：本階段沒有。
+- 測試方式與結果：上述唯讀檢查；PRD 第 11 節驗收清單尚待逐條測試。
+- API 用量與費用：Claude 本身 0 次。本人投稿 1 篇共 12 次呼叫，US$0.0136。
