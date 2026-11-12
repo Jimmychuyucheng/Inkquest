@@ -19,3 +19,49 @@ export const userQuotaSchema = z.strictObject({
 });
 
 export type SettingsUpdate = z.infer<typeof settingsUpdateSchema>;
+
+/** 後台「註冊帳號」列表的一列。 */
+export interface AccountRow {
+  id: string;
+  email: string;
+  name: string;
+  isAdmin: boolean;
+  createdAt: string;
+  lastSignInAt: string | null;
+  submissions: number;
+  researchConsent: boolean;
+  quotaOverride: number | null;
+}
+
+export interface ProfileRow {
+  id: string;
+  email: string;
+  display_name: string | null;
+  role: string;
+  created_at: string;
+  daily_quota_override: number | null;
+  research_consent_at: string | null;
+}
+
+/** 合併 profiles、登入紀錄與投稿數，依註冊時間由新到舊排序。 */
+export function buildAccountRows(
+  profiles: readonly ProfileRow[],
+  lastSignIn: Readonly<Record<string, string | null | undefined>>,
+  submissionUserIds: readonly string[],
+): AccountRow[] {
+  const counts = new Map<string, number>();
+  for (const id of submissionUserIds) counts.set(id, (counts.get(id) ?? 0) + 1);
+  return profiles
+    .map((p) => ({
+      id: p.id,
+      email: p.email,
+      name: p.display_name ?? "",
+      isAdmin: p.role === "admin",
+      createdAt: p.created_at,
+      lastSignInAt: lastSignIn[p.id] ?? null,
+      submissions: counts.get(p.id) ?? 0,
+      researchConsent: p.research_consent_at !== null,
+      quotaOverride: p.daily_quota_override,
+    }))
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}

@@ -1,4 +1,5 @@
 // 後台與月費用警戒線的伺服器端查詢。只能在伺服器使用（service role）。
+import { buildAccountRows, type AccountRow } from "@/lib/core/admin";
 import { dayStartUtc } from "@/lib/core/quota";
 import { settings } from "@/lib/core/shared";
 import {
@@ -87,4 +88,17 @@ export async function getAdminOverview(now = new Date()): Promise<AdminOverview>
       budgetUsd: live.monthly_budget_usd,
     },
   };
+}
+
+/** 後台「註冊帳號」列表：profiles 加上 Supabase Auth 的最後登入時間與目前的投稿數。 */
+export async function getAccounts(): Promise<AccountRow[]> {
+  const admin = createAdminClient();
+  const [profiles, auth, subs] = await Promise.all([
+    admin.from("profiles").select("id, email, display_name, role, created_at, daily_quota_override, research_consent_at"),
+    admin.auth.admin.listUsers({ perPage: 1000 }),
+    admin.from("submissions").select("user_id"),
+  ]);
+  if (profiles.error || auth.error || subs.error) throw new Error("讀取註冊帳號失敗");
+  const lastSignIn = Object.fromEntries(auth.data.users.map((u) => [u.id, u.last_sign_in_at ?? null]));
+  return buildAccountRows(profiles.data ?? [], lastSignIn, (subs.data ?? []).map((s) => s.user_id));
 }

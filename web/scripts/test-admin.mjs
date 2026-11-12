@@ -138,10 +138,11 @@ try {
   await insertDone(other.user.id);
   res = await boss.request("GET", "/admin");
   let html = await res.text();
-  const need = ["管理者後台", "用量總覽", "今日", "本月", "投稿數", "token 用量", "估算費用", "本月費用", "陪審員", "法官", "修改建議", "額度設定", "匯出投稿統計"];
+  const need = ["管理者後台", "用量總覽", "今日", "本月", "投稿數", "token 用量", "估算費用", "本月費用", "陪審員", "法官", "修改建議", "額度設定", "註冊帳號", "匯出投稿統計"];
   const missing = need.filter((t) => !html.includes(t));
   check("管理者看得到用量、費用、額度設定與匯出", res.status === 200 && missing.length === 0, `狀態 ${res.status}，缺少：${missing.join("、")}`);
   check("後台頁面不含文章內容與標題", !html.includes(SECRET_TEXT) && !html.includes(SECRET_TITLE));
+  check("註冊帳號列表列出測試使用者的帳號與研究同意狀態", html.includes("註冊帳號") && html.includes(member.email) && html.includes(other.email) && html.includes("已同意"));
   const { data: usage } = await admin.rpc("admin_usage", { p_since: new Date(Date.now() - 60_000).toISOString() });
   check("用量統計算得到剛寫入的投稿與陪審員紀錄", (usage?.submissions?.done ?? 0) >= 2 && usage.tokens.some((t) => t.source === "juror" && t.calls >= 4), JSON.stringify(usage));
 

@@ -2,8 +2,11 @@
 // 只有 role = admin 可以進入；不顯示任何文章內容。
 import { AdminQuota } from "@/components/admin-quota";
 import { buttonVariants } from "@/components/ui/button";
-import { getAdminOverview, type AdminOverview } from "@/lib/admin-server";
+import { getAccounts, getAdminOverview, type AdminOverview } from "@/lib/admin-server";
 import { requireAdmin } from "@/lib/auth";
+import type { AccountRow } from "@/lib/core/admin";
+import { formatDateTime } from "@/lib/core/result";
+import { settings } from "@/lib/core/shared";
 import { copy } from "@/lib/copy";
 import { formatUsd, SOURCES, type UsageSummary } from "@/lib/core/usage";
 
@@ -99,6 +102,45 @@ function Budget({ budget }: { budget: AdminOverview["budget"] }) {
   );
 }
 
+function Accounts({ accounts, dailyQuota }: { accounts: AccountRow[] | null; dailyQuota: number }) {
+  if (accounts === null) return <p role="alert" className="text-sm text-destructive">{t.accountsFailed}</p>;
+  if (accounts.length === 0) return <p className="text-sm text-muted-foreground">{t.accountsEmpty}</p>;
+  const time = (iso: string | null) => (iso ? formatDateTime(iso, settings.web.timezone) : t.never);
+  return (
+    <div className="overflow-x-auto rounded-lg border bg-card">
+      <table className="w-full min-w-[760px] text-sm">
+        <thead>
+          <tr className="border-b text-left text-muted-foreground">
+            <th scope="col" className="px-3 py-2 font-normal">{t.accountEmail}</th>
+            <th scope="col" className="px-3 py-2 font-normal">{t.accountName}</th>
+            <th scope="col" className="px-3 py-2 font-normal">{t.accountCreated}</th>
+            <th scope="col" className="px-3 py-2 font-normal">{t.accountLastSignIn}</th>
+            <th scope="col" className="px-3 py-2 text-right font-normal">{t.accountSubmissions}</th>
+            <th scope="col" className="px-3 py-2 font-normal">{t.accountConsent}</th>
+            <th scope="col" className="px-3 py-2 text-right font-normal">{t.accountQuota}</th>
+          </tr>
+        </thead>
+        <tbody className="tabular-nums">
+          {accounts.map((a) => (
+            <tr key={a.id} className="border-b last:border-0">
+              <th scope="row" className="px-3 py-2 text-left font-normal">
+                <span className="break-all">{a.email}</span>
+                {a.isAdmin && <span className="ml-2 rounded-full border px-2 py-0.5 text-xs text-muted-foreground">{t.roleAdmin}</span>}
+              </th>
+              <td className="px-3 py-2">{a.name || t.never}</td>
+              <td className="whitespace-nowrap px-3 py-2">{time(a.createdAt)}</td>
+              <td className="whitespace-nowrap px-3 py-2">{time(a.lastSignInAt)}</td>
+              <td className="px-3 py-2 text-right">{num(a.submissions)}</td>
+              <td className="px-3 py-2">{a.researchConsent ? t.consentYes : t.consentNo}</td>
+              <td className="px-3 py-2 text-right">{a.quotaOverride ?? dailyQuota}{a.quotaOverride !== null && " *"}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 export default async function AdminPage() {
   await requireAdmin();
   let overview: AdminOverview;
@@ -112,6 +154,9 @@ export default async function AdminPage() {
       </div>
     );
   }
+
+  // 帳號列表讀取失敗時，只有這一區顯示錯誤，其他區塊照常
+  const accounts = await getAccounts().catch(() => null);
 
   return (
     <div className="space-y-10">
@@ -135,6 +180,15 @@ export default async function AdminPage() {
           globalLimit={overview.settings.global_daily_limit}
           globalUsedToday={overview.today.submissions.total - overview.today.submissions.failed}
         />
+      </section>
+
+      <section className="space-y-3" aria-labelledby="accounts-title">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 id="accounts-title" className="font-heading text-xl font-semibold">{t.accountsTitle}</h2>
+          <p className="text-sm text-muted-foreground">{t.totalUsers(overview.totalUsers)}</p>
+        </div>
+        <p className="text-sm text-muted-foreground">{t.accountsIntro}{t.accountsQuotaNote}</p>
+        <Accounts accounts={accounts} dailyQuota={overview.settings.daily_quota_per_user} />
       </section>
 
       <section className="space-y-3" aria-labelledby="export-title">

@@ -1,7 +1,7 @@
 // 後台的純邏輯測試：費用估算、月費用警戒線、額度設定的格式檢查、匯出 CSV。
 import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
-import { settingsUpdateSchema, userQuotaSchema } from "./admin";
+import { buildAccountRows, settingsUpdateSchema, userQuotaSchema } from "./admin";
 import { anonymousCode, buildCsv, EXPORT_COLUMNS, formatLocal, type ExportSubmission } from "./export";
 import { rejectMessage } from "./quota";
 import { settings } from "./shared";
@@ -216,5 +216,24 @@ describe("匯出投稿統計 CSV", () => {
   it("時間轉成台北時間", () => {
     expect(formatLocal("2026-11-30T17:00:00Z", "Asia/Taipei")).toBe("2026-12-01 01:00:00");
     expect(formatLocal(null, "Asia/Taipei")).toBe("");
+  });
+});
+
+describe("後台註冊帳號列表", () => {
+  const base = { display_name: null, role: "user", daily_quota_override: null, research_consent_at: null };
+  const profiles = [
+    { ...base, id: "a", email: "a@example.com", created_at: "2026-11-10T01:00:00Z" },
+    { ...base, id: "b", email: "b@example.com", created_at: "2026-11-12T01:00:00Z", display_name: "小B", role: "admin", daily_quota_override: 100, research_consent_at: "2026-11-12T01:05:00Z" },
+  ];
+
+  it("依註冊時間由新到舊，並合併登入時間與投稿數", () => {
+    const rows = buildAccountRows(profiles, { b: "2026-11-12T03:00:00Z" }, ["a", "b", "a"]);
+    expect(rows.map((r) => r.id)).toEqual(["b", "a"]);
+    expect(rows[0]).toMatchObject({ name: "小B", isAdmin: true, lastSignInAt: "2026-11-12T03:00:00Z", submissions: 1, researchConsent: true, quotaOverride: 100 });
+    expect(rows[1]).toMatchObject({ name: "", isAdmin: false, lastSignInAt: null, submissions: 2, researchConsent: false, quotaOverride: null });
+  });
+
+  it("沒有投稿的帳號投稿數為 0", () => {
+    expect(buildAccountRows(profiles, {}, []).every((r) => r.submissions === 0)).toBe(true);
   });
 });
