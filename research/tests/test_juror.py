@@ -122,7 +122,7 @@ def test_mock_outputs_are_valid_and_differ_per_juror(settings):
         output = JurorOutput.model_validate(data)
         assert check_juror_lengths(output, settings.juror_output) == []
         outputs[persona.code] = json.dumps(data, ensure_ascii=False)
-    assert len(set(outputs.values())) == 20
+    assert len(set(outputs.values())) == len(outputs)
 
 
 def test_mock_can_simulate_failures(settings):

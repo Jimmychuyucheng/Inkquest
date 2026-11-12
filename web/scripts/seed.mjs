@@ -1,4 +1,4 @@
-// 把 shared/ 的 20 位人設與額度初始值寫進資料庫（npm run seed）。
+// 把 shared/ 的人設與額度初始值寫進資料庫（npm run seed）。
 // 可以重複執行：人設會更新成 shared/personas.yaml 的內容；
 // 額度設定只在資料庫還沒有該項時才寫入，不會蓋掉後台改過的數值。
 import { readFileSync } from "node:fs";

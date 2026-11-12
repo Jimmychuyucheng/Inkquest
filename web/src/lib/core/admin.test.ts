@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { buildAccountRows, settingsUpdateSchema, userQuotaSchema } from "./admin";
 import { anonymousCode, buildCsv, EXPORT_COLUMNS, formatLocal, type ExportSubmission } from "./export";
 import { rejectMessage } from "./quota";
-import { settings } from "./shared";
+import { personas, settings } from "./shared";
 import { budgetLevel, monthStartUtc, rowCost, summarizeUsage, usageSchema } from "./usage";
 
 const pricing = {
@@ -141,12 +141,12 @@ describe("匯出投稿統計 CSV", () => {
   const SALT = "test-salt-not-a-real-secret";
   const parse = (csv: string) => csv.replace(/^﻿/, "").trimEnd().split("\r\n").map((line) => line.split(","));
 
-  it("開頭有 BOM，第一列是欄位名稱，含 20 位陪審員欄位", () => {
+  it("開頭有 BOM，第一列是欄位名稱，含每位陪審員一個欄位", () => {
     const csv = buildCsv([row()], "Asia/Taipei", SALT);
     expect(csv.startsWith("﻿")).toBe(true);
     const [header] = parse(csv);
     expect(header).toEqual(EXPORT_COLUMNS);
-    expect(header.filter((h) => /^J\d{2}$/.test(h))).toHaveLength(20);
+    expect(header.filter((h) => /^J\d{2}$/.test(h))).toHaveLength(personas.length);
     for (const name of ["user_code", "genre", "char_count", "modules", "status", "jurors_ok", "mean_score", "support_ratio", "controversy", "created_at", "finished_at", "research_consent"]) {
       expect(header).toContain(name);
     }

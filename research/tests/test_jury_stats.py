@@ -28,10 +28,10 @@ def test_same_id_gives_same_jury_and_different_ids_vary(settings):
     first = [p.code for p in draw_jury("essay-1", personas, settings.jury)]
     assert first == [p.code for p in draw_jury("essay-1", personas, settings.jury)]
     assert first == [p.code for p in draw_jury("essay-1", list(reversed(personas)), settings.jury)]
-    juries = {tuple(p.code for p in draw_jury(f"essay-{i}", personas, settings.jury)) for i in range(20)}
+    juries = {tuple(p.code for p in draw_jury(f"essay-{i}", personas, settings.jury)) for i in range(60)}
     assert len(juries) > 10
     seen = {code for jury in juries for code in jury}
-    assert len(seen) == 20  # 多投幾次，20 位都有機會出現
+    assert len(seen) == len(personas)  # 多投幾次，每一位都有機會出現
 
 
 def test_draw_matches_documented_algorithm(settings):

@@ -40,10 +40,10 @@
       "J07",
       "J09",
       "J10",
-      "J13",
       "J14",
       "J18",
-      "J20"
+      "J21",
+      "J23"
     ],
     "abc": [
       "J02",
@@ -55,7 +55,7 @@
       "J13",
       "J17",
       "J19",
-      "J20"
+      "J22"
     ],
     "3f2b8c1e-9d4a-4f6b-8a2e-5c7d1e9f0a3b": [
       "J02",
@@ -65,9 +65,9 @@
       "J10",
       "J12",
       "J13",
-      "J16",
       "J18",
-      "J19"
+      "J19",
+      "J21"
     ],
     "投稿甲": [
       "J01",
@@ -79,7 +79,7 @@
       "J13",
       "J15",
       "J18",
-      "J19"
+      "J23"
     ],
     "00000000-0000-0000-0000-000000000000": [
       "J02",
@@ -89,9 +89,9 @@
       "J10",
       "J11",
       "J15",
-      "J18",
-      "J19",
-      "J20"
+      "J20",
+      "J22",
+      "J23"
     ]
   },
   "juries_with_disabled": {
@@ -110,35 +110,35 @@
         "J09",
         "J10",
         "J14",
-        "J15",
-        "J17",
         "J18",
-        "J19",
-        "J20"
+        "J20",
+        "J21",
+        "J22",
+        "J23"
       ],
       "abc": [
         "J06",
         "J07",
         "J09",
-        "J10",
         "J11",
         "J16",
         "J17",
-        "J18",
         "J19",
-        "J20"
+        "J20",
+        "J21",
+        "J22"
       ],
       "3f2b8c1e-9d4a-4f6b-8a2e-5c7d1e9f0a3b": [
         "J06",
         "J08",
         "J10",
         "J12",
-        "J14",
         "J15",
         "J16",
-        "J17",
         "J18",
-        "J19"
+        "J19",
+        "J21",
+        "J22"
       ],
       "投稿甲": [
         "J06",
@@ -147,22 +147,22 @@
         "J12",
         "J14",
         "J15",
-        "J16",
         "J18",
         "J19",
-        "J20"
+        "J20",
+        "J23"
       ],
       "00000000-0000-0000-0000-000000000000": [
         "J06",
-        "J07",
         "J08",
         "J09",
         "J10",
         "J11",
         "J15",
         "J18",
-        "J19",
-        "J20"
+        "J20",
+        "J22",
+        "J23"
       ]
     }
   },
@@ -224,7 +224,7 @@
           ]
         },
         {
-          "code": "J13",
+          "code": "J14",
           "score": 6,
           "would_support_award": false,
           "tags": [
@@ -232,7 +232,7 @@
           ]
         },
         {
-          "code": "J14",
+          "code": "J18",
           "score": 4,
           "would_support_award": false,
           "tags": [
@@ -241,7 +241,7 @@
           ]
         },
         {
-          "code": "J18",
+          "code": "J21",
           "score": 9,
           "would_support_award": false,
           "tags": [
@@ -249,7 +249,7 @@
           ]
         },
         {
-          "code": "J20",
+          "code": "J23",
           "score": 5,
           "would_support_award": false,
           "tags": [
@@ -469,7 +469,7 @@
           ]
         },
         {
-          "code": "J16",
+          "code": "J18",
           "score": 8,
           "would_support_award": false,
           "tags": [
@@ -598,7 +598,7 @@
           ]
         },
         {
-          "code": "J19",
+          "code": "J23",
           "score": 8,
           "would_support_award": false,
           "tags": [
@@ -709,7 +709,7 @@
           ]
         },
         {
-          "code": "J18",
+          "code": "J20",
           "score": 6,
           "would_support_award": true,
           "tags": [
@@ -719,7 +719,7 @@
           ]
         },
         {
-          "code": "J19",
+          "code": "J22",
           "score": 2,
           "would_support_award": true,
           "tags": [
@@ -819,7 +819,7 @@
           ]
         },
         {
-          "code": "J13",
+          "code": "J14",
           "score": 4,
           "would_support_award": true,
           "tags": [
@@ -829,7 +829,7 @@
           ]
         },
         {
-          "code": "J14",
+          "code": "J18",
           "score": 4,
           "would_support_award": true,
           "tags": [
@@ -952,7 +952,7 @@
           ]
         },
         {
-          "code": "J20",
+          "code": "J22",
           "score": 2,
           "would_support_award": true,
           "tags": [
@@ -1059,7 +1059,7 @@
           ]
         },
         {
-          "code": "J16",
+          "code": "J18",
           "score": 2,
           "would_support_award": true,
           "tags": [
@@ -1069,7 +1069,7 @@
           ]
         },
         {
-          "code": "J18",
+          "code": "J19",
           "score": 7,
           "would_support_award": true,
           "tags": [
@@ -1282,7 +1282,7 @@
           ]
         },
         {
-          "code": "J18",
+          "code": "J20",
           "score": 4,
           "would_support_award": false,
           "tags": [
@@ -1290,7 +1290,7 @@
           ]
         },
         {
-          "code": "J19",
+          "code": "J22",
           "score": 8,
           "would_support_award": true,
           "tags": [
@@ -1299,7 +1299,7 @@
           ]
         },
         {
-          "code": "J20",
+          "code": "J23",
           "score": 9,
           "would_support_award": true,
           "tags": [

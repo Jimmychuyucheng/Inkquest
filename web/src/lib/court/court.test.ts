@@ -74,12 +74,12 @@ function setup(options: MockOptions = {}, modules?: string[]) {
 }
 
 describe("假資料符合 PRD 第 5 節的格式", () => {
-  it("20 位陪審員的假評閱都通過驗證，而且內容各不相同", () => {
+  it("每位陪審員的假評閱都通過驗證，而且內容各不相同", () => {
     const comments = personas.map((p) => {
       const text = JSON.stringify(mockJurorOutput({ juror_code: p.code, juror_name: p.name, focus: p.focus }));
       return parseJurorOutput(text, settings).comment;
     });
-    expect(new Set(comments).size).toBe(20);
+    expect(new Set(comments).size).toBe(personas.length);
   });
 
   it("假判決與假修改建議通過驗證", () => {

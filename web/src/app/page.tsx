@@ -5,6 +5,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { LoginButton } from "@/components/login-button";
 import { getCurrentUser } from "@/lib/auth";
 import { copy } from "@/lib/copy";
+import { personas, settings } from "@/lib/core/shared";
 import { supabaseConfigured } from "@/lib/env";
 
 export default async function HomePage({
@@ -45,16 +46,22 @@ export default async function HomePage({
       </section>
 
       <figure className="space-y-2">
-        {/* 全員圖：20 位角色依三組站在一起 */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/jurors/all.png"
-          alt={copy.home.allAlt}
-          width={1920}
-          height={1080}
-          className="w-full rounded-xl border-2 border-primary/15"
-        />
-        <figcaption className="text-center text-sm text-muted-foreground">{copy.home.juryIntro}</figcaption>
+        {/* 全員圖：寬螢幕用橫的、手機用方的（原圖是重複圖樣，裁短不影響內容） */}
+        <picture>
+          <source media="(max-width: 639px)" srcSet="/jurors/all-mobile.png" width={1080} height={1080} />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/jurors/all-desktop.png"
+            alt={copy.home.allAlt}
+            width={1920}
+            height={720}
+            className="w-full rounded-xl border-2 border-primary/15"
+          />
+        </picture>
+        <figcaption className="text-center text-sm text-muted-foreground">{copy.home.juryIntro(
+            personas.filter((p) => p.enabled).length,
+            Object.entries(settings.jury.size_by_group).map(([g, n]) => copy.home.groupCount(g, n)).join("、"),
+          )}</figcaption>
       </figure>
 
       <section className="space-y-4" aria-labelledby="jury-title">

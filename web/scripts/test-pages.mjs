@@ -5,6 +5,7 @@
 // 執行前請先啟動：LLM_PROVIDER=mock 的網站（npm run dev）與 Inngest 開發伺服器。
 import { createServerClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
+import { readFileSync } from "node:fs";
 import { loadEnv } from "./env.mjs";
 
 const env = loadEnv(["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY", "SUPABASE_SECRET_KEY"]);
@@ -16,6 +17,7 @@ function check(name, ok, detail = "") {
   console.log(`  ${ok ? "✓" : "✗"} ${name}${ok || !detail ? "" : `（${detail}）`}`);
   if (!ok) failures += 1;
 }
+const PERSONA_COUNT = JSON.parse(readFileSync(new URL("../src/generated/shared.json", import.meta.url), "utf8")).personas.length;
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const has = (html, ...texts) => texts.filter((text) => !html.includes(text));
 
@@ -45,7 +47,7 @@ try {
 
   console.log("首頁");
   const home = await (await fetch(SITE + "/")).text();
-  check("首頁有全員圖與選角畫面（20 位角色）", home.includes("/jurors/all.png") && home.includes("選擇角色") && (home.match(/\/jurors\/J\d{2}\.png/g) ?? []).length >= 20);
+  check("首頁有全員圖（電腦版與手機版）與選角畫面（每位角色都有圖）", home.includes("/jurors/all-desktop.png") && home.includes("/jurors/all-mobile.png") && home.includes("選擇角色") && new Set(home.match(/\/jurors\/J\d{2}\.png/g) ?? []).size >= PERSONA_COUNT);
 
   console.log("登入與條款");
   let res = await get("/submit");

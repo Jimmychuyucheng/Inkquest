@@ -1,4 +1,4 @@
-// 每位陪審員的角色圖（像素風人物，圖檔在 public/jurors/J01.png～J20.png，產品負責人提供）。
+// 每位陪審員的角色圖（像素風人物，圖檔在 public/jurors/J01.png 起，每位一張，產品負責人提供）。
 // 外框用組別識別色，一眼看出是哪一組。
 import { groupColor } from "@/lib/core/result";
 import { personas } from "@/lib/core/shared";

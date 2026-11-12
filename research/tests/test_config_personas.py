@@ -33,10 +33,10 @@ def test_cost_estimate_uses_pricing_from_settings():
     assert settings.estimate_cost_usd("不存在的模型", 1, 1) is None
 
 
-def test_twenty_personas_in_three_groups():
+def test_personas_in_three_groups():
     personas = load_personas()
-    assert [p.code for p in personas] == [f"J{i:02d}" for i in range(1, 21)]
-    assert Counter(p.group for p in personas) == {"文學專業": 6, "一般讀者": 6, "跨界視角": 8}
+    assert [p.code for p in personas] == [f"J{i:02d}" for i in range(1, 24)]
+    assert Counter(p.group for p in personas) == {"文學專業": 6, "一般讀者": 6, "跨界視角": 11}
     assert all(p.background and p.focus and p.tone for p in personas)
     assert all(p.voice_traits and p.vocabulary_rule for p in personas)
 

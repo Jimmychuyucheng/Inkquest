@@ -8,6 +8,7 @@
 // 4. 同時送出多次也不會超額
 // 5. 使用者繞過前端直接呼叫資料庫：不能建立投稿、不能改自己的額度或角色、看不到別人的資料
 // 6. 刪除後資料庫查不到該文章
+import { readFileSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
 import { loadEnv } from "./env.mjs";
 
@@ -138,7 +139,8 @@ try {
 
   const personas = await alice.client.from("personas").select("code");
   console.log("人設");
-  check("讀得到 20 位陪審員（需先執行 npm run seed）", (personas.data ?? []).length === 20, `目前 ${(personas.data ?? []).length} 位`);
+  const expected = JSON.parse(readFileSync(new URL("../src/generated/shared.json", import.meta.url), "utf8")).personas.length;
+  check(`讀得到 ${expected} 位陪審員（需先執行 npm run seed）`, (personas.data ?? []).length === expected, `目前 ${(personas.data ?? []).length} 位`);
 } catch (error) {
   failures += 1;
   console.error(`測試中斷：${error.message}`);

@@ -1,4 +1,4 @@
-"""讀取 shared/personas.yaml 的 20 位陪審員人設與各組別的用詞規則。"""
+"""讀取 shared/personas.yaml 的陪審員人設與各組別的用詞規則。"""
 
 from __future__ import annotations
 
@@ -72,4 +72,5 @@ def get_persona(code: str, personas: list[Persona] | None = None) -> Persona:
     for persona in personas if personas is not None else load_personas():
         if persona.code == code.upper():
             return persona
-    raise KeyError(f"找不到陪審員 {code}，可用的編號是 J01～J20")
+    codes = [p.code for p in personas] if personas is not None else [p.code for p in load_personas()]
+    raise KeyError(f"找不到陪審員 {code}，可用的編號是 {codes[0]}～{codes[-1]}")

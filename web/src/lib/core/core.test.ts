@@ -1,6 +1,6 @@
 // 核心邏輯的測試：字數、抽選、計分要與 Python 研究腳本算出相同結果。
 // 對照資料由 research/export_parity_fixtures.py 產生。
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { drawJury } from "./jury";
@@ -13,10 +13,15 @@ const parity = JSON.parse(readFileSync(fixturePath, "utf8"));
 const groupOf = Object.fromEntries(personas.map((p) => [p.code, p.group]));
 
 describe("shared 設定", () => {
-  it("有 20 位陪審員、三個組別 6／6／8", () => {
-    expect(personas).toHaveLength(20);
+  it("有 23 位陪審員、三個組別 6／6／11", () => {
+    expect(personas).toHaveLength(23);
     const count = (g: string) => personas.filter((p) => p.group === g).length;
-    expect(GROUPS.map(count)).toEqual([6, 6, 8]);
+    expect(GROUPS.map(count)).toEqual([6, 6, 11]);
+  });
+
+  it("每位陪審員都有角色圖（web/public/jurors/編號.png）", () => {
+    const missing = personas.filter((p) => !existsSync(fileURLToPath(new URL(`../../../public/jurors/${p.code}.png`, import.meta.url))));
+    expect(missing.map((p) => p.code)).toEqual([]);
   });
 
   it("額度與模型都從設定讀取", () => {
