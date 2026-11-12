@@ -81,6 +81,12 @@ describe("伺服器端檢查投稿內容", () => {
     });
   });
 
+  it("帶著自己選的陪審員（jury 欄位）也能通過格式檢查", () => {
+    expect(validateSubmission(body({ jury: ["J01", "J07", "J21"] }), settings).ok).toBe(true);
+    expect(validateSubmission(body({ jury: [] }), settings).ok).toBe(true);
+    expect(validateSubmission(body({ jury: "J01" }), settings).ok).toBe(false);
+  });
+
   it("標題可以不填", () => {
     const rest: Record<string, unknown> = body();
     delete rest.title;

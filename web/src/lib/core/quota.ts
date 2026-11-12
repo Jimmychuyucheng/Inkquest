@@ -21,6 +21,8 @@ export function submissionRequestSchema(settings: Settings) {
       .array(z.enum(modules))
       .min(1)
       .refine((items) => new Set(items).size === items.length),
+    // 自己選的陪審員（可選）；編號與每組名額由 jury.ts 的 validatePicks 檢查
+    jury: z.array(z.string()).max(50).optional(),
   });
 }
 
